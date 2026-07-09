@@ -41,11 +41,21 @@ docs/
 dist/            # 배포물 (정적)
 ```
 
-### 데이터 분리 (프라이버시)
-- `public/data/students.json` — **코드별 본인 데이터만** (과목별 요소 도달률·총점·5등급). 코호트 분포 없음 → 학생 탭이 남의 데이터를 안 받음.
-- `public/data/cohort.json` — 교사 탭용 과목별 분포(라벨 없는 총점 배열, 상자그림 통계). **비밀번호 입력 후 로드**.
-- `code-map.csv` — 학년/반/번호↔코드. 교사 오프라인 보관, **배포 안 함**.
-- ⚠️ 정적 사이트라 비밀번호는 우발적 노출 차단용이지 완전 보안 아님(명시). 필요 시 교내 서버 접근제어로 보강.
+### 데이터 분리 (프라이버시) — 구현
+- `public/data/students/<CODE>.json` — **코드별 파일 1개, 본인 데이터만** (요소 도달률·총점·5등급). 학생 탭은 자기 코드 파일만 fetch → 남의 데이터 안 받음.
+- `public/data/meta.json` — 과목 메타 + 예시코드(공개).
+- `public/data/cohort.json` — 교사 탭용 학년·과목별 분포(라벨 없는 총점 배열)·`summaryStats`. **비밀번호 입력 후 로드**.
+- `code-map.csv` — 학년/반/번호↔코드. 교사 오프라인 보관, **.gitignore·배포 안 함**.
+- ⚠️ 정적 사이트라 비밀번호는 우발적 노출 차단용이지 완전 보안 아님. 필요 시 교내 서버 접근제어로 보강.
+
+### 실행 (구현)
+```
+node scripts/gen-sample.mjs   # (실데이터 없을 때) 데모 data/*.csv 생성
+node scripts/build-data.mjs   # data/* + config → public/data/*, code-map.csv
+node --test scripts/grade.test.mjs   # 등급/도달률 단위 테스트
+python -m http.server 5501    # 정적 서빙
+```
+실데이터 투입 시: `data/<과목>.csv`(열 `학년,반,번호,<요소…>`)만 교체 후 build 재실행.
 
 ## 계산 (grade.mjs)
 - **도달률** = 요소점수 / 요소만점 × 100 (요소별, 0~100%).
@@ -93,8 +103,17 @@ dist/            # 배포물 (정적)
 - 히스토그램 (교사): 막대 `--green-300`, 본인/강조 구간 `--green-600`. `chartjs-plugin-annotation`.
 - 상자그림 (교사): `@sgratzl/chartjs-chart-boxplot` 플러그인.
 
-## 의존성
-`vite`, `xlsx`(SheetJS), `chart.js`, `chartjs-plugin-annotation`, `@sgratzl/chartjs-chart-boxplot`.
+## 의존성 (구현 반영)
+- 런타임: **Chart.js (CDN)** — 라인/막대. 상자그림은 **순수 SVG**(플러그인 불필요, `summaryStats` 사분위 사용).
+- 빌드: **SheetJS `xlsx`** — `.xlsx`/`.xls`/`.csv` 입력 지원. 테스트는 Node 내장 `node:test`.
+- 번들러 없음(정적). Pretendard 폰트 CDN.
+- ⚠️ `xlsx@0.18.5` npm 고위험 권고 존재(악성 파일 파싱 시). 교사 본인 로컬 파일만 처리하므로 위험 낮음. 원하면 SheetJS 공식 CDN 최신판으로 교체 가능.
+
+## 입력 파일 (실제 형태 미상 대비)
+- 형태 몰라도 되도록 **유연한 컬럼 인식**: `학년/grade`, `반/class/분반`, `번호/번/출석번호/학생번호`, 요소 `수행(평가)/중간(고사)/기말(고사)` 별칭·정규화 매칭.
+- **이름 등 불필요 열은 자동 무시** (읽지도 저장도 안 함 → 프라이버시).
+- 과목당 파일 1개(`data/<과목>.<xlsx|csv>`), 첫 시트 사용. 실데이터 받으면 열 이름 확인만 하면 대개 그대로 동작.
+- 요소·반영비율·만점은 `config/subjects.json`에서 관리.
 
 ## 검증 (end-to-end)
 1. 더미 `data/*.xlsx` + `config/subjects.json` (예: 100명, 중간·기말 있는 과목 포함).

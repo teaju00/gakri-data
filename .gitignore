@@ -1,0 +1,10 @@
+node_modules/
+# 교사 오프라인 보관용 (학년/반/번호 ↔ 코드) — 절대 배포/커밋 금지
+code-map.csv
+# 성적 입력/산출물 — 재생성 가능 + 점수 데이터라 커밋 안 함 (npm run gen-sample && npm run build)
+data/
+public/data/
+*.log
+.DS_Store
+# Claude Code 로컬 사용자 설정 (권한 등) — 공유 안 함
+.claude/settings.local.json

@@ -1,0 +1,16 @@
+{
+  "name": "gakri-data",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "학생 성적 분석 사이트 — 정적 사이트 + 로컬 빌드",
+  "scripts": {
+    "gen-sample": "node scripts/gen-sample.mjs",
+    "build": "node scripts/build-data.mjs",
+    "test": "node --test scripts/grade.test.mjs",
+    "serve": "python -m http.server 5501"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5"
+  }
+}

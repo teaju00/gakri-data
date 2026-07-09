@@ -1,0 +1,14 @@
+{
+  "gradeCuts": { "note": "누적비율 컷 1등급≤10, 2≤34, 3≤66, 4≤90, 5 나머지" },
+  "componentOrder": ["수행", "중간", "기말"],
+  "subjects": [
+    { "id": "kor", "name": "국어", "icon": "#ic-book",  "components": { "수행": { "weight": 40, "max": 40 },  "중간": { "weight": 30, "max": 100 }, "기말": { "weight": 30, "max": 100 } } },
+    { "id": "mat", "name": "수학", "icon": "#ic-sigma", "components": { "수행": { "weight": 30, "max": 30 },  "중간": { "weight": 35, "max": 100 }, "기말": { "weight": 35, "max": 100 } } },
+    { "id": "eng", "name": "영어", "icon": "#ic-globe", "components": { "수행": { "weight": 40, "max": 50 },  "중간": { "weight": 30, "max": 100 }, "기말": { "weight": 30, "max": 100 } } },
+    { "id": "soc", "name": "사회", "icon": "#ic-bank",  "components": { "수행": { "weight": 50, "max": 50 },  "기말": { "weight": 50, "max": 100 } } },
+    { "id": "sci", "name": "과학", "icon": "#ic-flask", "components": { "수행": { "weight": 40, "max": 40 },  "중간": { "weight": 30, "max": 100 }, "기말": { "weight": 30, "max": 100 } } },
+    { "id": "pe",  "name": "체육", "icon": "#ic-run",   "components": { "수행": { "weight": 100, "max": 100 } } },
+    { "id": "mus", "name": "음악", "icon": "#ic-note",  "components": { "수행": { "weight": 60, "max": 60 },  "기말": { "weight": 40, "max": 100 } } },
+    { "id": "art", "name": "미술", "icon": "#ic-brush", "components": { "수행": { "weight": 100, "max": 100 } } }
+  ]
+}
