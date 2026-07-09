@@ -1,18 +1,228 @@
+/* ============================================
+   Claymorphism Design System — styles.css
+   ============================================ */
+
+:root {
+  /* Green scale (dark → light) */
+  --green-900: #024C34;
+  --green-800: #036242;
+  --green-700: #0A7A54;
+  --green-600: #12936A;
+  --green-500: #3FA37E;
+  --green-400: #6FBE9E;
+  --green-300: #A9D9C4;
+  --green-200: #D6EFE4;
+  --green-100: #E6F4EE;
+  --green-050: #F1F8F5;
+
+  /* Semantic tokens */
+  --brand: var(--green-800);
+  --brand-strong: var(--green-900);
+  --brand-accent: var(--green-600);
+  --bg: #DDE8E2;          /* body background - slightly darker for card contrast */
+  --surface-card: #F0F7F3; /* card surface - brighter than bg for float effect */
+  --text: #0B2F23;
+  --text-soft: #3C5C4F;
+  --text-muted: #7FA895;
+  --white: #FFFFFF;
+
+  /* Auxiliary 4 colors */
+  --teal: #4DB8A4;
+  --gold: #F2C94C;
+  --slate: #6B8A9E;
+  --cream: #FBF7EF;
+
+  /* Clay shadows (green-tinted, no pure black) */
+  --clay-shadow-dark: rgba(3, 60, 42, 0.18);
+  --clay-shadow-subtle: rgba(3, 60, 42, 0.06);
+  --clay-highlight: rgba(255, 255, 255, 0.7);
+
+  /* Radius scale */
+  --radius-card: 24px;
+  --radius-sub: 18px;
+  --radius-btn: 20px;
+  --radius-badge: 999px;
+
+  --font-sans: 'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
+}
+
+/* ---- Base resets ---- */
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body {
-  font-family: 'Pretendard', system-ui, -apple-system, sans-serif;
-  background: #E6F1EC;
-  color: #0C4A34;
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
 }
-a { color: #036242; }
-a:hover { color: #0A7A54; }
-input::placeholder { color: #7FA895; }
-input:focus { outline: none; }
+a { color: var(--green-800); }
+a:hover { color: var(--green-700); }
+input::placeholder { color: var(--text-muted); }
 button { font-family: inherit; }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: rgba(3,98,66,0.18); border-radius: 8px; }
+
+/* ---- Clay classes ---- */
+
+/* 볼록 (raised) — 카드 기본 */
+.clay-raised {
+  background: var(--surface-card);
+  border-radius: var(--radius-card); /* 24px */
+  box-shadow:
+    8px 12px 24px rgba(3, 60, 42, 0.12),
+    inset 4px 6px 12px rgba(255, 255, 255, 0.8),
+    inset -4px -6px 16px rgba(3, 60, 42, 0.08);
+}
+
+/* 오목 (inset) — 텍스트 입력창 등 깊게 파인 곳 */
+.clay-inset-field {
+  background: var(--surface-card);
+  border-radius: var(--radius-sub); /* 18px */
+  box-shadow:
+    inset 4px 4px 12px rgba(3, 60, 42, 0.1),
+    inset -4px -4px 12px rgba(255, 255, 255, 0.9);
+}
+
+/* 일반 오목 영역 (탭 바, 테이블 바깥 등 얕게 파인 배경) */
+.clay-inset {
+  border-radius: 22px;
+  background: #EAF4EF;
+  box-shadow:
+    inset 4px 4px 12px rgba(3, 60, 42, 0.08),
+    inset -4px -4px 12px rgba(255, 255, 255, 0.9);
+}
+
+/* 아이콘 박스 */
+.clay-icon {
+  border-radius: 14px;
+  background: #E6F1EC;
+  color: var(--brand);
+  box-shadow:
+    6px 8px 16px rgba(3, 60, 42, 0.1),
+    inset 3px 4px 8px rgba(255, 255, 255, 0.8),
+    inset -3px -4px 8px rgba(3, 60, 42, 0.06);
+}
+
+/* 보조 버튼 */
+.clay-soft-btn {
+  border: none;
+  border-radius: 14px;
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--text-soft);
+  background: #E6F1EC;
+  cursor: pointer;
+  box-shadow:
+    4px 6px 12px rgba(3, 60, 42, 0.08),
+    inset 2px 3px 6px rgba(255, 255, 255, 0.8),
+    inset -2px -3px 6px rgba(3, 60, 42, 0.04);
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+}
+.clay-soft-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.03);
+  box-shadow:
+    4px 8px 16px rgba(3, 60, 42, 0.1),
+    inset 2px 3px 6px rgba(255, 255, 255, 0.8),
+    inset -2px -3px 6px rgba(3, 60, 42, 0.04);
+}
+.clay-soft-btn:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow:
+    inset 3px 4px 8px rgba(3, 60, 42, 0.12),
+    inset -3px -4px 8px rgba(255, 255, 255, 0.8);
+}
+
+/* 탭 바 활성 버튼 */
+.clay-tab-active {
+  border: none;
+  border-radius: 16px;
+  font-family: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  color: var(--white);
+  background: var(--brand);
+  box-shadow:
+    4px 6px 12px rgba(3, 60, 42, 0.2),
+    inset 2px 3px 6px rgba(255, 255, 255, 0.3),
+    inset -2px -3px 8px rgba(1, 50, 33, 0.4);
+}
+
+/* 테이블 로우 */
+.clay-table-row {
+  background: #EAF4EF;
+  border-radius: 18px;
+  box-shadow:
+    inset 3px 4px 8px rgba(3, 60, 42, 0.06),
+    inset -3px -4px 8px rgba(255, 255, 255, 0.8);
+}
+
+/* 강조 버튼 (.clay-brand-btn) */
+.clay-brand-btn {
+  background: var(--brand);
+  color: var(--white);
+  border-radius: var(--radius-btn); /* 20px */
+  border: none;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  box-shadow:
+    6px 8px 16px rgba(3, 60, 42, 0.25),
+    inset 3px 4px 8px rgba(255, 255, 255, 0.3),
+    inset -3px -4px 10px rgba(1, 50, 33, 0.5);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.12s ease;
+}
+.clay-brand-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.06);
+  box-shadow:
+    6px 12px 20px rgba(3, 60, 42, 0.3),
+    inset 3px 4px 8px rgba(255, 255, 255, 0.35),
+    inset -3px -4px 10px rgba(1, 50, 33, 0.5);
+}
+.clay-brand-btn:active {
+  transform: translateY(1px) scale(0.98);
+  filter: none;
+  box-shadow:
+    2px 4px 8px rgba(3, 60, 42, 0.15),
+    inset 4px 6px 12px rgba(1, 50, 33, 0.6),
+    inset -2px -2px 6px rgba(255, 255, 255, 0.15);
+}
+
+/* ---- Improved existing button/card classes ---- */
+
+.btn-primary { transition: filter .12s ease, box-shadow .12s ease, transform .12s ease; }
+.btn-primary:hover { filter: brightness(1.07); transform: translateY(-2px); }
+.btn-primary:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: inset 4px 4px 10px rgba(1,50,33,0.55), inset -3px -3px 8px rgba(90,180,140,0.35) !important;
+}
+
+.btn-soft { transition: color .12s ease, filter .12s ease, box-shadow .12s ease, transform .12s ease; }
+.btn-soft:hover { color: var(--green-700); filter: brightness(1.03); transform: translateY(-1px); }
+.btn-soft:active {
+  transform: translateY(0);
+  box-shadow: inset 3px 3px 7px rgba(3,98,66,0.16), inset -3px -3px 7px rgba(255,255,255,0.9) !important;
+}
+
+.card-hover { transition: filter .12s ease, transform .12s ease; }
+.card-hover:hover { filter: brightness(1.025); transform: translateY(-3px); }
+
+/* ---- Input focus — clay focus ring ---- */
+input:focus {
+  outline: none;
+  box-shadow:
+    inset 7px 7px 15px rgba(3,60,42,0.18),
+    inset -7px -7px 15px rgba(255,255,255,0.95),
+    0 0 0 3px rgba(3,98,66,0.25) !important;
+  transition: box-shadow 0.15s ease;
+}
+
+/* ---- Animations ---- */
 
 @keyframes clayshake {
   10%,90% { transform: translateX(-2px); }
@@ -21,19 +231,46 @@ button { font-family: inherit; }
   40%,60% { transform: translateX(5px); }
 }
 
-/* clay 버튼 상호작용 (dc.html의 style-hover / style-active 대체) */
-.btn-primary { transition: filter .12s ease, box-shadow .12s ease; }
-.btn-primary:hover { filter: brightness(1.07); }
-.btn-primary:active {
-  box-shadow: inset 4px 4px 10px rgba(1,50,33,0.55), inset -3px -3px 8px rgba(90,180,140,0.35) !important;
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
-.btn-soft { transition: color .12s ease, filter .12s ease, box-shadow .12s ease; }
-.btn-soft:hover { color: #0A7A54; filter: brightness(1.03); }
-.btn-soft:active {
-  box-shadow: inset 3px 3px 7px rgba(3,98,66,0.16), inset -3px -3px 7px rgba(255,255,255,0.9) !important;
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-.card-hover { transition: filter .12s ease; }
-.card-hover:hover { filter: brightness(1.015); }
+
+/* ---- Modal styles ---- */
+
+.grade-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 60, 42, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+.grade-modal {
+  background: var(--cream);
+  border-radius: var(--radius-card);
+  padding: 40px;
+  max-width: 340px;
+  width: 90%;
+  box-shadow:
+    14px 20px 40px rgba(3, 60, 42, 0.2),
+    inset 4px 6px 16px rgba(255, 255, 255, 0.9),
+    inset -4px -8px 16px rgba(3, 60, 42, 0.08);
+  animation: fadeUp 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* ---- Responsive ---- */
 
 @media (max-width: 760px) {
   .teacher-grid { grid-template-columns: 1fr !important; }

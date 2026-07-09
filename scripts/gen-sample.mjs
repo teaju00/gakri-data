@@ -26,6 +26,7 @@ for (const { g, ban, num } of cohortDef) {
       const a = norm(); // 학생 잠재 능력 (과목 공통)
       const scores = {};
       for (const s of cfg.subjects) {
+        if (cfg.grade_subjects && cfg.grade_subjects[g] && !cfg.grade_subjects[g].includes(s.id)) continue;
         scores[s.id] = {};
         for (const [comp, meta] of Object.entries(s.components)) {
           const raw = clamp(Math.round(meta.max * (0.72 + 0.14 * (a + 0.35 * norm()))), 0, meta.max);
@@ -43,6 +44,7 @@ for (const s of cfg.subjects) {
   const header = ['학년', '반', '번호', ...comps];
   const lines = [header.join(',')];
   for (const st of students) {
+    if (!st.scores[s.id]) continue;
     lines.push([st.g, st.b, st.n, ...comps.map(c => st.scores[s.id][c])].join(','));
   }
   const csv = '﻿' + lines.join('\r\n') + '\r\n'; // BOM + CRLF (엑셀 호환)

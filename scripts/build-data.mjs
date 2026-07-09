@@ -113,13 +113,27 @@ const byGrade = {};
 grades.forEach(g => { byGrade[g] = all.filter(st => st.g === g); });
 
 const cohort = {};
+const metaGradeCuts = {};
 for (const g of grades) {
   cohort[g] = { count: byGrade[g].length, subjects: {} };
+  metaGradeCuts[g] = {};
   for (const s of subjects) {
-    const totals = byGrade[g].map(st => weightedTotal(st.subj[s.id].scores, s.components));
+    const studentsWithSubj = byGrade[g].filter(st => st.subj[s.id]);
+    if (studentsWithSubj.length === 0) continue;
+    const totals = studentsWithSubj.map(st => weightedTotal(st.subj[s.id].scores, s.components));
     const gr = assignGrades(totals);
-    byGrade[g].forEach((st, i) => { st.subj[s.id].total = totals[i]; st.subj[s.id].grade = gr[i]; });
+    studentsWithSubj.forEach((st, i) => { st.subj[s.id].total = totals[i]; st.subj[s.id].grade = gr[i]; });
     cohort[g].subjects[s.id] = { name: s.name, totals: totals.map(round1), gradeCounts: gradeCounts(gr), stats: summaryStats(totals) };
+    
+    const cutoffs = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    for (let i = 1; i <= 5; i++) {
+      let minScore = 1000;
+      for (let j = 0; j < totals.length; j++) {
+        if (gr[j] === i && totals[j] < minScore) minScore = totals[j];
+      }
+      cutoffs[i] = minScore === 1000 ? null : round1(minScore);
+    }
+    metaGradeCuts[g][s.id] = cutoffs;
   }
 }
 
@@ -132,8 +146,10 @@ mkdirSync(stuDir, { recursive: true });
 for (const st of all) {
   const subjOut = {};
   let gsum = 0;
+  let subjCount = 0;
   for (const s of subjects) {
     const d = st.subj[s.id];
+    if (!d) continue;
     const reach = {}, comps = {};
     for (const [c, meta] of Object.entries(s.components)) {
       reach[c] = reachRate(d.scores[c], meta.max);
@@ -141,8 +157,9 @@ for (const st of all) {
     }
     subjOut[s.id] = { total: d.total, grade: d.grade, reach, comps };
     gsum += d.grade;
+    subjCount++;
   }
-  const payload = { code: st.code, grade: st.g, avg: round1(gsum / subjects.length), subjects: subjOut };
+  const payload = { code: st.code, grade: st.g, avg: round1(gsum / (subjCount || 1)), subjects: subjOut };
   writeFileSync(path.join(stuDir, st.code + '.json'), JSON.stringify(payload));
 }
 
@@ -152,6 +169,7 @@ const meta = {
   subjects: subjMeta,
   componentOrder: cfg.componentOrder,
   grades,
+  gradeCuts: metaGradeCuts,
   exampleCodes: [pick(grades[grades.length - 1], 10), pick(grades[1] ?? grades[0], 70), pick(grades[0], 130)],
 };
 writeFileSync(path.join(outDir, 'meta.json'), JSON.stringify(meta, null, 0));

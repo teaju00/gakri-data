@@ -51,6 +51,57 @@
     return '<svg viewBox="0 0 ' + w + ' ' + h + '" width="100%" preserveAspectRatio="xMidYMid meet" style="display:block;height:auto;">' + line + dots + '</svg>';
   };
 
+  // 슬로프 차트 (도달률 변화, SVG)
+  GK.slopeChart = function (labels, data) {
+    if (!labels || labels.length < 2) return '';
+    var W = 480, H = 200;
+    var n = labels.length;
+    var xs = n === 2 ? [140, 340] : [80, 240, 400];
+    
+    var minVal = Math.min.apply(null, data);
+    var maxVal = Math.max.apply(null, data);
+    var range = maxVal - minVal;
+    var yTop = 70, yBot = 140;
+    var getY = function(val) {
+      if (range === 0) return (yTop + yBot) / 2;
+      return yBot - ((val - minVal) / range) * (yBot - yTop);
+    };
+
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" preserveAspectRatio="xMidYMid meet" style="display:block;height:auto;" xmlns="http://www.w3.org/2000/svg">';
+    svg += '<style>text{font-family:Pretendard,sans-serif;}</style>';
+
+    // 연결선
+    var linePts = xs.slice(0, n).map(function (x, i) { return x + ',' + getY(data[i]); }).join(' ');
+    svg += '<polyline points="' + linePts + '" fill="none" stroke="#A9D9C4" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>';
+
+    // 변화 배지 (선 위에 그려서 가리기)
+    for (var j = 0; j < n - 1; j++) {
+      var delta = Math.round((data[j + 1] - data[j]) * 10) / 10;
+      var badgeText = delta >= 0 ? '+' + delta + '%p' : delta + '%p';
+      var badgeFill = delta >= 0 ? '#12936A' : '#6FBE9E';
+      var mx = (xs[j] + xs[j + 1]) / 2;
+      var my = (getY(data[j]) + getY(data[j + 1])) / 2;
+      var bw = badgeText.length * 8 + 12;
+      svg += '<rect x="' + (mx - bw / 2) + '" y="' + (my - 12) + '" width="' + bw + '" height="24" rx="8" fill="' + badgeFill + '" stroke="#F0F7F3" stroke-width="3"/>';
+      svg += '<text x="' + mx + '" y="' + (my + 4) + '" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">' + badgeText + '</text>';
+    }
+
+    // 점 + 라벨 + 수치
+    for (var i = 0; i < n; i++) {
+      var x = xs[i];
+      var y = getY(data[i]);
+      // 라벨
+      svg += '<text x="' + x + '" y="' + (y - 35) + '" text-anchor="middle" font-size="13" font-weight="600" fill="#3C5C4F">' + labels[i] + '</text>';
+      // 수치
+      svg += '<text x="' + x + '" y="' + (y - 12) + '" text-anchor="middle" font-size="28" font-weight="800" fill="#036242">' + Math.round(data[i]) + '%</text>';
+      // 원 (카드 표면색 테두리)
+      svg += '<circle cx="' + x + '" cy="' + y + '" r="8" fill="#036242" stroke="#F0F7F3" stroke-width="3"/>';
+    }
+
+    svg += '</svg>';
+    return svg;
+  };
+
   // 교사 히스토그램 (코호트 분포, 본인 마커 없음)
   GK.histogram = function (el, totals) {
     if (!el || !window.Chart) return null;

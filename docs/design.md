@@ -27,61 +27,62 @@
   --brand-strong: var(--green-900);
   --brand-accent: var(--green-600);
 
-  --bg:      var(--green-050);
-  --surface: var(--green-100);
-  --text:      #0B2F23; /* 니어블랙 그린 */
-  --text-soft: #3C5C4F;
-  --white:     #FFFFFF;
+  --bg:           #DDE8E2; /* body background - 약간 더 진하게 (카드와 대비) */
+  --surface-card: #F0F7F3; /* card surface - 더 밝게 (부유감) */
+  --text:         #0B2F23;
+  --text-soft:    #3C5C4F;
+  --text-muted:   #7FA895;
+  --white:        #FFFFFF;
 
-  /* 클레이 그림자 (그린 톤) */
-  --clay-shadow-dark: rgba(3, 60, 42, 0.18);  /* 우하단 짙은 그림자 */
-  --clay-highlight:   rgba(255, 255, 255, 0.9); /* 좌상단 하이라이트 */
+  /* 보조색 4종 (상태, 차트 포인트용) */
+  --teal:  #4DB8A4;
+  --gold:  #F2C94C;
+  --slate: #6B8A9E;
+  --cream: #FBF7EF; /* 모달 등 강조 배경 */
+
+  /* 클레이 그림자 (3레이어 정석) */
+  --clay-shadow-dark:   rgba(3, 60, 42, 0.18);
+  --clay-shadow-subtle: rgba(3, 60, 42, 0.06);
+  --clay-highlight:     rgba(255, 255, 255, 0.7);
 }
 ```
 
-### 다크 모드 (선택, `@media (prefers-color-scheme: dark)`)
-- `--bg: #0A1F17; --surface: #12291F; --text: #E6F4EE; --text-soft: #A9D9C4;`
-- `--clay-shadow-dark: rgba(0,0,0,0.5); --clay-highlight: rgba(63,163,126,0.12);`
-- 브랜드 스케일은 유지, 표면만 어둡게.
+다크 모드는 본 프로젝트에서 **제외**합니다 (밝고 화사한 톤 유지).
 
 ---
 
 ## 2. 클레이모피즘 레시피
 
-핵심: 큰 라운드 + 이중 `box-shadow`(외부 짙은 그림자 + 좌상단 밝은 하이라이트). 표면색은 배경보다 살짝 밝게.
+핵심: 큰 라운드 + 3레이어 `box-shadow`(외부 짙은 그림자 + 좌상단 밝은 하이라이트 + 우하단 얕은 그림자). 배경과 카드의 명도 차이로 부유감을 줍니다.
 
 ```css
-/* 볼록 (raised) — 카드/버튼 기본 */
-.clay {
-  background: var(--surface);
-  border-radius: 24px;
+/* 볼록 (raised) — 카드 기본 */
+.clay-raised {
+  background: var(--surface-card);
+  border-radius: var(--radius-card); /* 24px */
   box-shadow:
-     8px  8px 18px var(--clay-shadow-dark),
-    -8px -8px 18px var(--clay-highlight);
+    10px 10px 24px var(--clay-shadow-dark),
+    inset -6px -6px 14px var(--clay-highlight),
+    inset 4px 4px 10px var(--clay-shadow-subtle);
 }
 
-/* 오목 (pressed/inset) — 입력창, 눌림 상태 */
-.clay-inset {
-  background: var(--surface);
-  border-radius: 18px;
-  box-shadow:
-    inset 6px 6px 12px var(--clay-shadow-dark),
-    inset -6px -6px 12px var(--clay-highlight);
-}
-
-/* 강조 볼록 — 주색 채운 버튼 */
-.clay-brand {
+/* 강조 버튼 (.clay-brand-btn) */
+.clay-brand-btn {
   background: var(--brand);
   color: var(--white);
-  border-radius: 20px;
+  border-radius: var(--radius-btn); /* 20px */
   box-shadow:
-     6px  6px 14px var(--clay-shadow-dark),
-    -6px -6px 14px rgba(255,255,255,0.25);
+    8px 8px 18px var(--clay-shadow-dark),
+    inset -4px -4px 8px rgba(90, 180, 140, 0.35),
+    inset 3px 3px 8px rgba(1, 50, 33, 0.4);
+  /* hover시 translateY(-2px), active시 translateY(1px) + scale(0.98) */
 }
+
+/* 포커스 링 (input:focus) */
+/* inset 그림자로 파인 느낌을 주고, 외부 0 0 0 3px 로 은은한 포커스 링 제공 */
 ```
 
-- 라운드 스케일: 카드 `24px`, 서브카드 `18px`, 버튼 `20px`, 뱃지 `pill(999px)` 또는 라운드 사각.
-- hover: 그림자 offset/blur 소폭 증가. active: `clay-inset`로 전환(눌림감).
+- 라운드 스케일: 카드 `24px`, 서브카드 `18px`, 버튼 `20px`, 뱃지 `pill(999px)`.
 - 테두리(border) 사용 금지 — 깊이는 그림자로만.
 
 ---
@@ -110,9 +111,10 @@
 - 중앙: 반영 총점(큰 숫자), 하단: 미니 히스토그램(본인 위치 마커).
 - 반/번호·석차·백분위 표시 금지.
 
-### 5등급 뱃지
-- 라운드 사각 SVG 컨테이너 + 숫자. 배경색 = 등급 색(§5), 텍스트 흰색(1~3등급)·`--text`(4~5등급).
-- "N등급" 텍스트 병기.
+### 5등급 뱃지 & 등급 모달
+- 카드 우상단의 등급 뱃지(라운드 사각)를 클릭하면 모달 오픈.
+- **모달 규칙**: "N등급" 텍스트와 5단계 시각 바만 노출. 수준 설명 텍스트, 백분율 수치 등 타인과 비교되는 구체적 지표는 **절대 노출 금지**.
+- 모달 디자인: 배경색 `--cream`, `clay-raised` 구조 사용. 페이드 업 애니메이션.
 
 ### 버튼
 - 기본 `.clay-brand`(주색). 보조 `.clay`(표면색 + `--brand` 텍스트).
@@ -164,11 +166,13 @@
 
 전부 그린 팔레트. **프레이밍 규칙**: 학생 차트는 자기 대비 진전만, 서열/타학생 비교 금지. 하강·저점도 붉은 경고색 쓰지 않음(중립 그린).
 
-### 진전 라인 — 학생 (메인)
-- 라인/포인트: `--brand` `#036242`, 두께 3px, 포인트 반경 4.
-- 채움(area): `rgba(3, 98, 66, 0.14)`.
-- 시간축: 수행 → 중간 → 기말 (도달률 %, y 0~100).
-- 중간→기말 변화 뱃지: 상승 `--green-600`, **하강 `--green-400`(중립, 경고색 아님)** + 방향 화살표 SVG.
+### 진전 슬로프 그래프 — 학생 (메인, SVG 기반)
+- 꺾은선(Chart.js) 대신 **SVG 슬로프 그래프** 사용.
+- **3포인트**: 수행 → 중간 → 기말. X축에 균등 배치 (가운데 수평 정렬).
+- **2포인트**: 수행 → 기말 등. 덤벨 스타일로 양 끝에 배치.
+- 점: `--brand` 10px 반경, 흰 테두리.
+- 선: `--green-300` 4px 두께.
+- 중간 변화 뱃지: 선의 정중앙에 위치. 상승은 `--green-600` (+), 하락은 `--green-400` (중립 그린, -). 둥근 사각형.
 - 타학생 데이터·분포 절대 표시 안 함.
 
 ### 히스토그램 — 교사
