@@ -12,8 +12,9 @@
   var meta = null;
   var state = {
     tab: 'student',
+    entered: false, pw: '', pwErr: false,
     code: '', codeErr: false, student: null, selSubject: null,
-    tpw: '', tpwErr: false, unlocked: false, cohort: null, tGrade: null, tSubject: null
+    cohort: null, tGrade: null, tSubject: null, _cohortLoading: false
   };
   var root;
   var chartRegistry = [];
@@ -21,6 +22,8 @@
   // ------- 스타일 조각 -------
   var CARD = 'background:#EAF4EF;border-radius:28px;padding:22px 26px;box-shadow:16px 16px 32px rgba(3,98,66,0.13),-10px -10px 24px rgba(255,255,255,0.9),inset 0 10px 18px rgba(255,255,255,0.5),inset 0 -8px 14px rgba(3,98,66,0.05);';
   var INSET = 'border-radius:22px;background:#EAF4EF;box-shadow:inset 7px 7px 15px rgba(3,60,42,0.13),inset -7px -7px 15px rgba(255,255,255,0.92);';
+  // 차트는 카드(클레이 박스) 위에 직접 표시 — 감싸는 박스(파임/볼록) 없음. 여백만.
+  var CHART = '';
   var ICONBOX = 'width:44px;height:44px;flex:none;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#036242;background:#E6F1EC;box-shadow:5px 5px 10px rgba(3,98,66,0.12),-4px -4px 9px rgba(255,255,255,0.95),inset 2px 2px 5px rgba(255,255,255,0.7);';
   var BRANDBTN = 'border:none;border-radius:16px;padding:14px 18px;font-size:15px;font-weight:700;font-family:inherit;color:#fff;background:#036242;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:8px 8px 16px rgba(3,98,66,0.3),-4px -4px 10px rgba(255,255,255,0.5),inset 2px 2px 6px rgba(90,180,140,0.4),inset -3px -3px 8px rgba(1,50,33,0.5);';
   var SOFTBTN = 'border:none;border-radius:14px;padding:10px 15px;font-size:13.5px;font-weight:700;font-family:inherit;color:#4E7D68;background:#E6F1EC;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:6px 6px 12px rgba(3,98,66,0.13),-5px -5px 10px rgba(255,255,255,0.95),inset 2px 2px 5px rgba(255,255,255,0.7);';
@@ -93,7 +96,7 @@
         '<div style="display:flex;align-items:center;justify-content:space-between;"><div style="display:flex;align-items:center;gap:11px;"><div style="' + ICONBOX + '">' + svg(s.icon, 24) + '</div><span style="font-size:17px;font-weight:800;color:#0A3D2A;">' + s.name + '</span></div>' +
         '<div style="width:42px;height:42px;flex:none;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:' + gradeText[d.grade] + ';background:' + gradeColors[d.grade] + ';box-shadow:4px 4px 9px rgba(3,60,42,0.18),inset 2px 2px 5px rgba(255,255,255,0.4),inset -2px -2px 6px rgba(3,60,42,0.14);">' + d.grade + '</div></div>' +
         '<div style="display:flex;align-items:baseline;gap:6px;"><span style="font-size:30px;font-weight:800;color:#036242;line-height:1;">' + fmt(d.total) + '</span><span style="font-size:13px;color:#7FA895;font-weight:600;">점 / 100</span>' + (changeBadge(d.reach) ? '<span style="margin-left:auto;">' + changeBadge(d.reach) + '</span>' : '') + '</div>' +
-        '<div style="padding:6px 8px;border-radius:12px;background:#EAF4EF;box-shadow:inset 4px 4px 8px rgba(3,60,42,0.1),inset -4px -4px 8px rgba(255,255,255,0.9);">' + GK.miniProgress(labels, data) + '</div>' +
+        '<div style="padding:6px 2px;">' + GK.miniProgress(labels, data) + '</div>' +
         '<div style="display:flex;flex-wrap:wrap;gap:6px;border-top:1px solid rgba(3,98,66,0.09);padding-top:10px;">' + chips + '</div></div>';
     }).join('');
 
@@ -130,24 +133,24 @@
     var order = meta.componentOrder.filter(function (c) { return d.reach[c] != null; });
     var multi = order.length > 1;
     var body = multi
-      ? '<div style="position:relative;height:280px;padding:12px;' + INSET + '"><canvas id="progCanvas"></canvas></div>'
-      : '<div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:34px;' + INSET + '"><span style="font-size:46px;font-weight:800;color:#036242;">' + d.reach[order[0]] + '%</span><span style="font-size:13px;color:#7FA895;">이 과목은 ' + order[0] + '평가만 반영합니다</span></div>';
+      ? '<div style="max-width:600px;margin:0 auto;position:relative;height:250px;padding:16px;' + CHART + '"><canvas id="progCanvas"></canvas></div>'
+      : '<div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:34px;' + CHART + '"><span style="font-size:46px;font-weight:800;color:#036242;">' + d.reach[order[0]] + '%</span><span style="font-size:13px;color:#7FA895;">이 과목은 ' + order[0] + '평가만 반영합니다</span></div>';
     return '<div style="' + CARD + '">' +
       '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;color:#036242;">' + svg('#ic-trend', 22) + '<span style="font-size:17px;font-weight:800;color:#0A3D2A;">' + s.name + ' · 자기 대비 진전</span>' + (changeBadge(d.reach) ? '<span style="margin-left:6px;">' + changeBadge(d.reach) + '</span>' : '') + '</div>' +
       '<div style="font-size:12px;color:#7FA895;margin-bottom:10px;">평가 시점별 도달률(내 점수 ÷ 만점). 과목 카드를 눌러 전환.</div>' + body + '</div>';
   }
 
   // ================================================================ 교사 탭
-  function teacherGate() {
-    var shake = state.tpwErr ? 'clayshake 0.42s ease' : 'none';
-    var err = state.tpwErr ? '<div id="tpwErr" style="font-size:13px;color:#3C5C4F;font-weight:600;margin-top:-12px;">비밀번호가 올바르지 않습니다.</div>' : '';
-    return '<div style="display:flex;justify-content:center;padding:20px;">' +
+  function entryGate() {
+    var shake = state.pwErr ? 'clayshake 0.42s ease' : 'none';
+    var err = state.pwErr ? '<div id="pwErr" style="font-size:13px;color:#3C5C4F;font-weight:600;margin-top:-12px;">비밀번호가 올바르지 않습니다.</div>' : '';
+    return '<div style="display:flex;justify-content:center;padding:40px 20px;">' +
       '<div style="width:100%;max-width:420px;display:flex;flex-direction:column;align-items:center;gap:24px;' + CARD + 'border-radius:34px;padding:48px 40px;">' +
       '<div style="' + ICONBOX + 'width:88px;height:88px;border-radius:26px;">' + svg('#ic-lock', 40) + '</div>' +
-      '<div style="text-align:center;"><div style="font-size:23px;font-weight:800;color:#0A3D2A;">교사 진단 · 인증</div><div style="margin-top:8px;font-size:14px;color:#4E7D68;line-height:1.5;">학급 분포·산포 진단 화면입니다.<br>비밀번호를 입력해 주세요.</div></div>' +
-      '<input id="tpw" type="password" value="' + esc(state.tpw) + '" placeholder="비밀번호" style="width:100%;border:none;border-radius:18px;padding:16px 20px;font-size:17px;font-family:inherit;color:#0C4A34;background:#E6F1EC;text-align:center;letter-spacing:0.15em;box-shadow:inset 6px 6px 12px rgba(3,98,66,0.14),inset -6px -6px 12px rgba(255,255,255,0.95);animation:' + shake + ';">' +
+      '<div style="text-align:center;"><div style="font-size:23px;font-weight:800;color:#0A3D2A;">성적 분석 · 접속 인증</div><div style="margin-top:8px;font-size:14px;color:#4E7D68;line-height:1.5;">교내 열람용 도구입니다.<br>비밀번호를 입력해 주세요.</div></div>' +
+      '<input id="pw" type="password" value="' + esc(state.pw) + '" placeholder="비밀번호" style="width:100%;border:none;border-radius:18px;padding:16px 20px;font-size:17px;font-family:inherit;color:#0C4A34;background:#E6F1EC;text-align:center;letter-spacing:0.15em;box-shadow:inset 6px 6px 12px rgba(3,98,66,0.14),inset -6px -6px 12px rgba(255,255,255,0.95);animation:' + shake + ';">' +
       err +
-      '<button data-act="unlock" class="btn-primary" style="' + BRANDBTN + 'width:100%;padding:16px;font-size:16px;">잠금 해제</button>' +
+      '<button data-act="enter" class="btn-primary" style="' + BRANDBTN + 'width:100%;padding:16px;font-size:16px;">입장</button>' +
       '<div style="font-size:12px;color:#8AAE9E;">데모 비밀번호: ' + esc(DEMO_PW) + '</div>' +
       '</div></div>';
   }
@@ -172,7 +175,7 @@
       '<div style="' + CARD + 'border-radius:26px;display:flex;flex-direction:column;gap:16px;">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">' +
       '<div style="display:flex;align-items:center;gap:10px;color:#036242;">' + svg('#ic-shield', 20) + '<span style="font-size:14px;font-weight:700;color:#0A3D2A;">진단용 화면 — 다음 수업 결정에 활용, 학생에게 직접 보여주지 않습니다</span></div>' +
-      '<button data-act="logoutT" class="btn-soft" style="' + SOFTBTN + '">' + svg('#ic-logout', 18) + '종료</button></div>' +
+      '<button data-act="lock" class="btn-soft" style="' + SOFTBTN + '">' + svg('#ic-logout', 18) + '잠금</button></div>' +
       '<div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;">' +
       '<div style="display:flex;gap:8px;">' + gradeBtns + '</div>' +
       '<div style="width:1px;height:24px;background:rgba(3,98,66,0.12);"></div>' +
@@ -182,14 +185,14 @@
       // histogram
       '<div style="' + CARD + '"><div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;color:#036242;">' + svg('#ic-bars', 22) + '<span style="font-size:17px;font-weight:800;color:#0A3D2A;">' + gsub.name + ' ' + g + '학년 점수 분포</span></div>' +
       '<div style="font-size:12px;color:#7FA895;margin-bottom:8px;">봉우리가 둘로 갈리면(이봉) 전체수업보다 두 트랙 차별화를 고려.</div>' +
-      '<div style="position:relative;height:250px;padding:12px;' + INSET + '"><canvas id="histCanvas"></canvas></div></div>' +
+      '<div style="position:relative;height:250px;padding:16px;' + CHART + '"><canvas id="histCanvas"></canvas></div></div>' +
       // grade dist + box
       '<div style="display:grid;grid-template-columns:1fr 1.3fr;gap:22px;" class="teacher-grid">' +
       '<div style="' + CARD + '"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;color:#036242;">' + svg('#ic-radar', 20) + '<span style="font-size:16px;font-weight:800;color:#0A3D2A;">5등급 분포</span></div>' +
-      '<div style="position:relative;height:230px;padding:12px;' + INSET + '"><canvas id="gradeCanvas"></canvas></div></div>' +
+      '<div style="position:relative;height:230px;padding:16px;' + CHART + '"><canvas id="gradeCanvas"></canvas></div></div>' +
       '<div style="' + CARD + '"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;color:#036242;">' + svg('#ic-box', 20) + '<span style="font-size:16px;font-weight:800;color:#0A3D2A;">과목별 산포 (상자그림)</span></div>' +
       '<div style="font-size:12px;color:#7FA895;margin-bottom:8px;">산포 크거나 이상치 많으면 이질 학급 → 소집단·차별화.</div>' +
-      '<div style="padding:8px;' + INSET + '">' + GK.boxPlotSVG(boxItems) + '</div></div>' +
+      '<div style="padding:14px;' + CHART + '">' + GK.boxPlotSVG(boxItems) + '</div></div>' +
       '</div></div>';
   }
 
@@ -199,11 +202,17 @@
   function render() {
     destroyCharts();
     if (!meta) { root.innerHTML = '<div style="padding:60px;text-align:center;color:#4E7D68;">데이터 로딩 중…</div>'; return; }
+    if (!state.entered) { root.innerHTML = '<div style="min-height:100vh;padding:26px 20px 64px;">' + entryGate() + '</div>'; return; }
     var body;
     if (state.tab === 'student') body = state.student ? studentDash() : studentInput();
-    else body = state.unlocked ? teacherDash() : teacherGate();
+    else body = teacherBody();
     root.innerHTML = '<div style="min-height:100vh;padding:26px 20px 64px;">' + tabbar() + body + '</div>';
     mountCharts();
+  }
+
+  function teacherBody() {
+    if (!state.cohort) { ensureCohort(); return '<div style="max-width:1080px;margin:0 auto;"><div style="' + CARD + 'text-align:center;color:#4E7D68;">진단 데이터 로딩 중…</div></div>'; }
+    return teacherDash();
   }
 
   function mountCharts() {
@@ -211,7 +220,7 @@
       var d = state.student.subjects[state.selSubject];
       var order = meta.componentOrder.filter(function (c) { return d.reach[c] != null; });
       if (order.length > 1) chartRegistry.push(GK.progressLine(document.getElementById('progCanvas'), order, order.map(function (c) { return d.reach[c]; })));
-    } else if (state.tab === 'teacher' && state.unlocked) {
+    } else if (state.tab === 'teacher' && state.cohort) {
       var g = state.tGrade, sub = state.cohort.grades[g].subjects[state.tSubject];
       chartRegistry.push(GK.histogram(document.getElementById('histCanvas'), sub.totals));
       chartRegistry.push(GK.gradeDist(document.getElementById('gradeCanvas'), sub.gradeCounts, gradeColors));
@@ -228,14 +237,19 @@
       .catch(function () { state.code = code; state.codeErr = true; render(); focusEl('code'); });
   }
 
-  function teacherUnlock() {
-    var el = document.getElementById('tpw'); state.tpw = el ? el.value : state.tpw;
-    if (state.tpw !== DEMO_PW) { state.tpwErr = true; render(); focusEl('tpw'); return; }
-    if (state.cohort) { state.unlocked = true; state.tpwErr = false; render(); return; }
+  function doEnter() {
+    var el = document.getElementById('pw'); state.pw = el ? el.value : state.pw;
+    if (state.pw === DEMO_PW) { state.entered = true; state.pwErr = false; render(); }
+    else { state.pwErr = true; render(); focusEl('pw'); }
+  }
+
+  // 교사 탭 첫 진입 시 코호트 데이터 지연 로드
+  function ensureCohort() {
+    if (state.cohort || state._cohortLoading) return;
+    state._cohortLoading = true;
     fetch('public/data/cohort.json').then(function (r) { return r.json(); }).then(function (d) {
-      state.cohort = d; state.unlocked = true; state.tpwErr = false;
-      state.tGrade = meta.grades[0]; state.tSubject = meta.subjects[0].id; render();
-    }).catch(function () { state.tpwErr = true; render(); });
+      state.cohort = d; state.tGrade = meta.grades[0]; state.tSubject = meta.subjects[0].id; state._cohortLoading = false; render();
+    }).catch(function () { state._cohortLoading = false; });
   }
 
   function focusEl(id) { setTimeout(function () { var el = document.getElementById(id); if (el) el.focus(); }, 30); }
@@ -249,19 +263,19 @@
     else if (act === 'example') { lookup(t.getAttribute('data-code')); }
     else if (act === 'back') { state.student = null; state.code = ''; state.codeErr = false; render(); }
     else if (act === 'selectS') { state.selSubject = t.getAttribute('data-sid'); render(); }
-    else if (act === 'unlock') { teacherUnlock(); }
-    else if (act === 'logoutT') { state.unlocked = false; state.tpw = ''; render(); }
+    else if (act === 'enter') { doEnter(); }
+    else if (act === 'lock') { state.entered = false; state.pw = ''; state.student = null; state.code = ''; render(); }
     else if (act === 'gGrade') { state.tGrade = +t.getAttribute('data-grade'); render(); }
     else if (act === 'tSubject') { state.tSubject = t.getAttribute('data-sid'); render(); }
   }
   function onKeydown(e) {
     if (e.key !== 'Enter') return;
     if (e.target.id === 'code') lookup(e.target.value);
-    else if (e.target.id === 'tpw') teacherUnlock();
+    else if (e.target.id === 'pw') doEnter();
   }
   function onInput(e) {
     if (e.target.id === 'code' && state.codeErr) { state.codeErr = false; strip('codeErr', 'code'); }
-    if (e.target.id === 'tpw' && state.tpwErr) { state.tpwErr = false; strip('tpwErr', 'tpw'); }
+    if (e.target.id === 'pw' && state.pwErr) { state.pwErr = false; strip('pwErr', 'pw'); }
   }
   function strip(errId, inputId) { var er = document.getElementById(errId); if (er) er.remove(); var inp = document.getElementById(inputId); if (inp) inp.style.animation = 'none'; }
 

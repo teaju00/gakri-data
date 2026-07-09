@@ -29,11 +29,11 @@
         }]
       },
       options: {
-        responsive: true, maintainAspectRatio: false, layout: { padding: 8 },
+        responsive: true, maintainAspectRatio: false, layout: { padding: { top: 12, bottom: 6, left: 16, right: 16 } },
         plugins: { legend: { display: false }, tooltip: Object.assign({}, TIP, { callbacks: { label: function (c) { return '도달률 ' + c.raw + '%'; } } }) },
         scales: {
-          y: { min: 0, max: 100, grid: { color: 'rgba(3,60,42,0.07)' }, border: { display: false }, ticks: { color: '#3C5C4F', font: { size: 11, family: 'Pretendard' }, callback: function (v) { return v + '%'; } } },
-          x: { grid: { display: false }, border: { display: false }, ticks: { color: '#0B2F23', font: { size: 13, family: 'Pretendard', weight: '700' } } }
+          y: { min: 0, max: 100, grid: { color: 'rgba(3,60,42,0.07)' }, border: { display: false }, ticks: { color: '#3C5C4F', font: { size: 11, family: 'Pretendard' }, stepSize: 20, callback: function (v) { return v + '%'; } } },
+          x: { offset: true, grid: { display: false }, border: { display: false }, ticks: { color: '#0B2F23', font: { size: 13, family: 'Pretendard', weight: '700' } } }
         }
       }
     });
@@ -42,23 +42,23 @@
   // 미니 진전 스파크라인 (SVG 문자열) — 카드용
   GK.miniProgress = function (labels, data) {
     if (!data.length) return '';
-    var w = 100, h = 40, pad = 4;
-    var xs = data.map(function (_, i) { return data.length === 1 ? w / 2 : pad + i * (w - 2 * pad) / (data.length - 1); });
-    var ys = data.map(function (v) { return h - pad - (v / 100) * (h - 2 * pad); });
-    var line = data.length > 1 ? '<polyline points="' + xs.map(function (x, i) { return x + ',' + ys[i]; }).join(' ') + '" fill="none" stroke="#036242" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>' : '';
-    var dots = xs.map(function (x, i) { return '<circle cx="' + x + '" cy="' + ys[i] + '" r="2.6" fill="#036242"/>'; }).join('');
-    return '<svg viewBox="0 0 ' + w + ' ' + h + '" width="100%" height="40" preserveAspectRatio="none">' + line + dots + '</svg>';
+    // 넓은 viewBox + 비율 유지(meet) → 좌우로 안 늘어남(점이 타원 안 됨). height는 폭 비례.
+    var w = 240, h = 46, padX = 12, padY = 9;
+    var xs = data.map(function (_, i) { return data.length === 1 ? w / 2 : padX + i * (w - 2 * padX) / (data.length - 1); });
+    var ys = data.map(function (v) { return h - padY - (v / 100) * (h - 2 * padY); });
+    var line = data.length > 1 ? '<polyline points="' + xs.map(function (x, i) { return x + ',' + ys[i]; }).join(' ') + '" fill="none" stroke="#036242" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>' : '';
+    var dots = xs.map(function (x, i) { return '<circle cx="' + x + '" cy="' + ys[i] + '" r="3.2" fill="#036242"/>'; }).join('');
+    return '<svg viewBox="0 0 ' + w + ' ' + h + '" width="100%" preserveAspectRatio="xMidYMid meet" style="display:block;height:auto;">' + line + dots + '</svg>';
   };
 
   // 교사 히스토그램 (코호트 분포, 본인 마커 없음)
   GK.histogram = function (el, totals) {
     if (!el || !window.Chart) return null;
     destroy(el);
-    var lo = Math.floor(Math.min.apply(null, totals)), hi = Math.ceil(Math.max.apply(null, totals));
-    var bins = 18, width = (hi - lo) / bins || 1;
+    var bins = 10; // 100점 기준 10점 단위 (0~10 … 90~100)
     var counts = new Array(bins).fill(0);
-    totals.forEach(function (v) { var b = Math.floor((v - lo) / width); if (b >= bins) b = bins - 1; if (b < 0) b = 0; counts[b]++; });
-    var labels = counts.map(function (_, i) { return Math.round(lo + width * (i + 0.5)); });
+    totals.forEach(function (v) { var b = Math.floor(v / 10); if (b >= bins) b = bins - 1; if (b < 0) b = 0; counts[b]++; });
+    var labels = counts.map(function (_, i) { return i === bins - 1 ? (i * 10) + '~100' : (i * 10) + '~' + (i * 10 + 9); });
     var fill = function (c) {
       var ctx = c.chart.ctx, area = c.chart.chartArea;
       if (!area) return '#A9D9C4';
@@ -72,9 +72,9 @@
       data: { labels: labels, datasets: [{ data: counts, backgroundColor: fill, borderRadius: { topLeft: 9, topRight: 9 }, borderSkipped: false, categoryPercentage: 0.95, barPercentage: 0.96 }] },
       options: {
         responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: Object.assign({}, TIP, { callbacks: { title: function (i) { return i[0].label + '점대'; }, label: function (c) { return c.raw + '명'; } } }) },
+        plugins: { legend: { display: false }, tooltip: Object.assign({}, TIP, { callbacks: { title: function (i) { return i[0].label + '점'; }, label: function (c) { return c.raw + '명'; } } }) },
         scales: {
-          x: { grid: { display: false }, border: { display: false }, ticks: { color: '#3C5C4F', font: { size: 10.5, family: 'Pretendard' }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
+          x: { grid: { display: false }, border: { display: false }, ticks: { color: '#3C5C4F', font: { size: 9.5, family: 'Pretendard' }, maxRotation: 0, autoSkip: false } },
           y: { grid: { color: 'rgba(3,60,42,0.07)' }, border: { display: false }, ticks: { color: '#3C5C4F', font: { size: 10.5, family: 'Pretendard' }, precision: 0 }, title: { display: true, text: '학생 수', color: '#7FA895', font: { size: 11, family: 'Pretendard' } } }
         }
       }
