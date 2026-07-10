@@ -1,0 +1,39 @@
+/* Pretendard v1.3.9 — 로컬 서브셋 (오프라인 데스크톱 앱용).
+ * 앱이 실제로 쓰는 굵기만 포함: 400/500/600/700/800.
+ * 원본: https://github.com/orioncactus/pretendard (SIL Open Font License 1.1) */
+
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url('./woff2/Pretendard-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url('./woff2/Pretendard-Medium.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  src: url('./woff2/Pretendard-SemiBold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url('./woff2/Pretendard-Bold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Pretendard';
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+  src: url('./woff2/Pretendard-ExtraBold.woff2') format('woff2');
+}

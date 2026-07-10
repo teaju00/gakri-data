@@ -1,0 +1,35 @@
+[workspace]
+members = ["core"]
+
+[package]
+name = "gakri-data"
+version = "0.1.0"
+description = "학생 성적 분석 — 오프라인 데스크톱"
+authors = ["gakri-data"]
+edition = "2021"
+rust-version = "1.77.2"
+
+[lib]
+name = "gakri_lib"
+# 데스크톱 전용이라 rlib 하나면 된다. Tauri 템플릿 기본값인 staticlib/cdylib 은 iOS/Android
+# 진입점용인데, cdylib 은 심볼을 전부 export 해서 MinGW ld 가 터진다
+# ("export ordinal too large"). 모바일을 지원할 때 다시 넣을 것.
+crate-type = ["rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+# 규칙(등급 계산·임포트·암호화·접근 제어)은 전부 여기. Tauri 를 모른다.
+gakri-core = { path = "core" }
+
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

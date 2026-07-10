@@ -1,20 +1,26 @@
 /* 성적 분석 — 탭 분리 앱 (학생 자기점검 / 교사 진단).
- * 데이터는 빌드 산출물(public/data/*)에서 fetch. 차트는 assets/charts.js(GK).
+ * 데이터 접근은 전부 GKAPI(assets/api.js) 경유. 웹 모드는 fetch, Tauri 모드는 Rust 커맨드.
  * 학생 탭: 자기 대비 진전 + 등급 뱃지 (전체 분포·서열 비노출).
- * 교사 탭: 비밀번호 후 히스토그램·상자그림·5등급 분포 (진단용). */
+ * 교사 탭: 인증 후 히스토그램·상자그림·5등급 분포 (진단용).
+ *   - 웹 모드: 단일 데모 비밀번호, 학년 단위 집계.
+ *   - Tauri 모드: 교사 계정 로그인, Rust 가 역할에 따라 반·과목 단위로 잘라서 내려줌. */
 (function () {
   'use strict';
 
-  var DEMO_PW = '1234';
+  var api = window.GKAPI;
+  var caps = api.caps();
+
   var gradeColors = ['', '#036242', '#0A7A54', '#3FA37E', '#A9D9C4', '#D6EFE4'];
   var gradeText   = ['', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#0B2F23', '#0B2F23'];
 
   var meta = null;
   var state = {
     tab: 'student',
-    entered: false, pw: '', pwErr: false,
+    // provisioned: 관리자 계정이 있는가. 웹 모드는 계정 개념이 없어 항상 true.
+    provisioned: !caps.accounts, needsImport: false, adminMsg: '',
+    entered: false, user: '', pw: '', pwErr: '', session: null,
     code: '', codeErr: false, student: null, selSubject: null,
-    cohort: null, tGrade: null, tSubject: null, _cohortLoading: false
+    cohort: null, tGrade: null, tClass: null, tSubject: null, _cohortLoading: false
   };
   var root;
   var chartRegistry = [];
@@ -191,51 +197,112 @@
   // ================================================================ 교사 탭
   function entryGate() {
     var shake = state.pwErr ? 'clayshake 0.42s ease' : 'none';
-    var err = state.pwErr ? '<div id="pwErr" style="font-size:13px;color:#3C5C4F;font-weight:600;margin-top:-12px;">비밀번호가 올바르지 않습니다.</div>' : '';
+    var err = state.pwErr ? '<div id="pwErr" style="font-size:13px;color:#3C5C4F;font-weight:600;margin-top:-12px;">' + esc(state.pwErr) + '</div>' : '';
+
+    var userField = caps.accounts
+      ? '<input id="user" class="clay-inset-field" value="' + esc(state.user) + '" placeholder="교사 아이디" style="width:100%;border:none;padding:16px 20px;font-size:17px;font-family:inherit;color:#0C4A34;text-align:center;">'
+      : '';
+    var subtitle = caps.accounts
+      ? '교내 열람용 도구입니다.<br>배정된 교사 계정으로 로그인해 주세요.'
+      : '교내 열람용 도구입니다.<br>비밀번호를 입력해 주세요.';
+    var hint = api.demoPassword
+      ? '<div style="font-size:12px;color:#8AAE9E;">데모 비밀번호: ' + esc(api.demoPassword) + '</div>'
+      : '<div style="font-size:12px;color:#8AAE9E;">담임은 자기 반, 교과교사는 담당 반·과목만 조회됩니다.</div>';
+
     return '<div style="display:flex;justify-content:center;padding:40px 20px;">' +
       '<div class="clay-raised" style="width:100%;max-width:420px;display:flex;flex-direction:column;align-items:center;gap:24px;padding:48px 40px;">' +
       '<div class="clay-icon" style="width:88px;height:88px;display:flex;align-items:center;justify-content:center;border-radius:26px;">' + svg('#ic-lock', 40) + '</div>' +
-      '<div style="text-align:center;"><div style="font-size:23px;font-weight:800;color:#0A3D2A;">성적 분석 · 접속 인증</div><div style="margin-top:8px;font-size:14px;color:#4E7D68;line-height:1.5;">교내 열람용 도구입니다.<br>비밀번호를 입력해 주세요.</div></div>' +
+      '<div style="text-align:center;"><div style="font-size:23px;font-weight:800;color:#0A3D2A;">성적 분석 · 접속 인증</div><div style="margin-top:8px;font-size:14px;color:#4E7D68;line-height:1.5;">' + subtitle + '</div></div>' +
+      userField +
       '<input id="pw" type="password" class="clay-inset-field" value="' + esc(state.pw) + '" placeholder="비밀번호" style="width:100%;border:none;padding:16px 20px;font-size:17px;font-family:inherit;color:#0C4A34;text-align:center;letter-spacing:0.15em;animation:' + shake + ';">' +
       err +
       '<button data-act="enter" class="clay-brand-btn" style="width:100%;padding:16px;font-size:16px;">입장</button>' +
-      '<div style="font-size:12px;color:#8AAE9E;">데모 비밀번호: ' + esc(DEMO_PW) + '</div>' +
+      hint +
       '</div></div>';
   }
 
-  function teacherDash() {
-    var g = state.tGrade;
-    if (!state.cohort.grades[g].subjects[state.tSubject]) {
-      state.tSubject = Object.keys(state.cohort.grades[g].subjects)[0];
+  // 세션이 볼 수 있는 집계 단위를 고른다.
+  //  - Tauri 모드: cohort.classes[학년][반]  (Rust 가 이미 역할대로 잘라서 내려줌)
+  //  - 웹 모드   : cohort.grades[학년]
+  function classScoped() { return caps.classScope && !!state.cohort.classes; }
+  function scopeRoot() { return classScoped() ? state.cohort.classes : state.cohort.grades; }
+  function numKeys(o) { return Object.keys(o || {}).map(Number).sort(function (a, b) { return a - b; }); }
+  function allowedGrades() { return numKeys(scopeRoot()); }
+  function allowedClasses(g) { return classScoped() ? numKeys(state.cohort.classes[g]) : []; }
+  function cohortNode() {
+    if (!classScoped()) return state.cohort.grades[state.tGrade];
+    var byClass = state.cohort.classes[state.tGrade];
+    return byClass && byClass[state.tClass];
+  }
+
+  // 선택 상태가 허용 범위를 벗어나면(로그인 직후, 학년 전환 등) 첫 유효값으로 되돌린다.
+  function normalizeSelection() {
+    var gs = allowedGrades();
+    if (gs.indexOf(state.tGrade) < 0) state.tGrade = gs[0];
+    if (classScoped()) {
+      var cs = allowedClasses(state.tGrade);
+      if (cs.indexOf(state.tClass) < 0) state.tClass = cs[0];
     }
-    var sid = state.tSubject;
-    var gsub = state.cohort.grades[g].subjects[sid];
+    var node = cohortNode();
+    if (!node) return false;
+    if (!node.subjects[state.tSubject]) state.tSubject = Object.keys(node.subjects)[0];
+    return !!state.tSubject;
+  }
+
+  function scopeBanner() {
+    var s = state.session;
+    if (!s || !caps.accounts) return '진단용 화면 — 다음 수업 결정에 활용, 학생에게 직접 보여주지 않습니다';
+    var who = s.role === 'homeroom' ? '담임' : s.role === 'subject' ? '교과' : '관리자';
+    return esc(s.displayName) + ' · ' + who + ' — 허용된 반·과목만 표시됩니다';
+  }
+
+  function teacherDash() {
+    if (!normalizeSelection()) {
+      return '<div style="max-width:1080px;margin:0 auto;"><div class="clay-raised" style="' + CARD_PAD + 'text-align:center;color:#4E7D68;">조회 가능한 데이터가 없습니다. 관리자에게 담당 반·과목 배정을 요청하세요.</div></div>';
+    }
+
+    var g = state.tGrade, sid = state.tSubject;
+    var node = cohortNode();
+    var gsub = node.subjects[sid];
     var stats = gsub.stats;
-    var gradeBtns = meta.grades.map(function (gg) {
+
+    var gradeBtns = allowedGrades().map(function (gg) {
       var btnCls = (gg === g) ? 'clay-tab-active' : 'clay-soft-btn';
       return '<button data-act="gGrade" data-grade="' + gg + '" class="' + btnCls + '" style="padding:9px 16px;font-size:14px;">' + gg + '학년</button>';
     }).join('');
-    var subjBtns = meta.subjects.filter(function(s) { return !!state.cohort.grades[g].subjects[s.id]; }).map(function (s) {
+
+    var classBtns = allowedClasses(g).map(function (cc) {
+      var btnCls = (cc === state.tClass) ? 'clay-tab-active' : 'clay-soft-btn';
+      return '<button data-act="tClass" data-class="' + cc + '" class="' + btnCls + '" style="padding:9px 16px;font-size:14px;">' + cc + '반</button>';
+    }).join('');
+    var classRow = classBtns
+      ? '<div style="width:1px;height:24px;background:rgba(3,98,66,0.12);"></div><div style="display:flex;gap:8px;">' + classBtns + '</div>'
+      : '';
+
+    var visibleSubjects = meta.subjects.filter(function (s) { return !!node.subjects[s.id]; });
+    var subjBtns = visibleSubjects.map(function (s) {
       var btnCls = (s.id === sid) ? 'clay-tab-active' : 'clay-soft-btn';
       return '<button data-act="tSubject" data-sid="' + s.id + '" class="' + btnCls + '" style="padding:8px 14px;font-size:13px;display:flex;align-items:center;gap:6px;">' + svg(s.icon, 16) + s.name + '</button>';
     }).join('');
-    var boxItems = meta.subjects.filter(function(s) { return !!state.cohort.grades[g].subjects[s.id]; }).map(function (s) { var d = state.cohort.grades[g].subjects[s.id]; return { name: s.name, totals: d.totals, stats: d.stats }; });
+    var boxItems = visibleSubjects.map(function (s) { var d = node.subjects[s.id]; return { name: s.name, totals: d.totals, stats: d.stats }; });
     var statTile = function (label, val) { return '<div class="clay-inset" style="flex:1;text-align:center;padding:14px 10px;border-radius:16px;"><div style="font-size:22px;font-weight:800;color:#036242;">' + val + '</div><div style="font-size:11.5px;color:#4E7D68;font-weight:600;margin-top:2px;">' + label + '</div></div>'; };
+    var groupLabel = classScoped() ? (g + '학년 ' + state.tClass + '반') : (g + '학년');
 
     return '<div style="max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:22px;">' +
       // banner + controls
       '<div class="clay-raised" style="' + CARD_PAD + 'display:flex;flex-direction:column;gap:16px;">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">' +
-      '<div style="display:flex;align-items:center;gap:10px;color:#036242;">' + svg('#ic-shield', 20) + '<span style="font-size:14px;font-weight:700;color:#0A3D2A;">진단용 화면 — 다음 수업 결정에 활용, 학생에게 직접 보여주지 않습니다</span></div>' +
+      '<div style="display:flex;align-items:center;gap:10px;color:#036242;">' + svg('#ic-shield', 20) + '<span style="font-size:14px;font-weight:700;color:#0A3D2A;">' + scopeBanner() + '</span></div>' +
       '<button data-act="lock" class="clay-soft-btn" style="padding:10px 15px;display:flex;align-items:center;gap:6px;font-size:13.5px;">' + svg('#ic-logout', 18) + '잠금</button></div>' +
       '<div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;">' +
       '<div style="display:flex;gap:8px;">' + gradeBtns + '</div>' +
+      classRow +
       '<div style="width:1px;height:24px;background:rgba(3,98,66,0.12);"></div>' +
       '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + subjBtns + '</div></div>' +
-      '<div style="display:flex;gap:12px;">' + statTile('학생 수', state.cohort.grades[g].count + '명') + statTile('평균', fmt(stats.mean)) + statTile('표준편차', fmt(stats.sd)) + statTile('중앙값', fmt(stats.median)) + '</div>' +
+      '<div style="display:flex;gap:12px;">' + statTile('학생 수', node.count + '명') + statTile('평균', fmt(stats.mean)) + statTile('표준편차', fmt(stats.sd)) + statTile('중앙값', fmt(stats.median)) + '</div>' +
       '</div>' +
       // histogram
-      '<div class="clay-raised" style="' + CARD_PAD + '"><div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;color:#036242;">' + svg('#ic-bars', 22) + '<span style="font-size:17px;font-weight:800;color:#0A3D2A;">' + gsub.name + ' ' + g + '학년 점수 분포</span></div>' +
+      '<div class="clay-raised" style="' + CARD_PAD + '"><div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;color:#036242;">' + svg('#ic-bars', 22) + '<span style="font-size:17px;font-weight:800;color:#0A3D2A;">' + esc(gsub.name) + ' ' + groupLabel + ' 점수 분포</span></div>' +
       '<div style="font-size:12px;color:#7FA895;margin-bottom:8px;">봉우리가 둘로 갈리면(이봉) 전체수업보다 두 트랙 차별화를 고려.</div>' +
       '<div style="position:relative;height:250px;padding:16px;' + CHART + '"><canvas id="histCanvas"></canvas></div></div>' +
       // grade dist + box
@@ -245,7 +312,92 @@
       '<div class="clay-raised" style="' + CARD_PAD + '"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;color:#036242;">' + svg('#ic-box', 20) + '<span style="font-size:16px;font-weight:800;color:#0A3D2A;">과목별 산포 (상자그림)</span></div>' +
       '<div style="font-size:12px;color:#7FA895;margin-bottom:8px;">산포 크거나 이상치 많으면 이질 학급 → 소집단·차별화.</div>' +
       '<div style="padding:14px;' + CHART + '">' + GK.boxPlotSVG(boxItems) + '</div></div>' +
-      '</div></div>';
+      '</div></div>' +
+      adminPanel();
+  }
+
+  // ================================================================ 관리자 화면 (Tauri 전용)
+  // 웹 모드에는 계정도 임포트도 없다. caps.accounts 로만 나타난다.
+
+  function panel(icon, title, subtitle, body) {
+    return '<div style="display:flex;justify-content:center;padding:40px 20px;">' +
+      '<div class="clay-raised" style="width:100%;max-width:480px;display:flex;flex-direction:column;gap:20px;padding:40px;">' +
+      '<div style="display:flex;align-items:center;gap:14px;"><div class="clay-icon" style="width:56px;height:56px;display:flex;align-items:center;justify-content:center;border-radius:18px;">' + svg(icon, 28) + '</div>' +
+      '<div><div style="font-size:21px;font-weight:800;color:#0A3D2A;">' + title + '</div>' +
+      '<div style="font-size:13px;color:#4E7D68;margin-top:3px;line-height:1.5;">' + subtitle + '</div></div></div>' +
+      body + '</div></div>';
+  }
+
+  function field(id, placeholder, type) {
+    return '<input id="' + id + '" ' + (type ? 'type="' + type + '" ' : '') + 'class="clay-inset-field" placeholder="' + placeholder + '" style="width:100%;border:none;padding:15px 18px;font-size:15px;font-family:inherit;color:#0C4A34;">';
+  }
+
+  function adminMsg() {
+    if (!state.adminMsg) return '';
+    return '<div style="font-size:13px;color:#3C5C4F;font-weight:600;">' + esc(state.adminMsg) + '</div>';
+  }
+
+  /// 최초 실행. 관리자 계정을 만들면서 vault 를 여는 키가 생성된다.
+  function setupScreen() {
+    return '<div style="min-height:100vh;padding:26px 20px 64px;">' + panel('#ic-shield', '최초 설정',
+      '이 컴퓨터에서 처음 실행합니다.<br>관리자 계정을 만들어 주세요.',
+      field('suUser', '관리자 아이디') +
+      field('suPw', '비밀번호 (8자 이상)', 'password') +
+      field('suPw2', '비밀번호 확인', 'password') +
+      adminMsg() +
+      '<button data-act="provision" class="clay-brand-btn" style="padding:16px;font-size:16px;">계정 만들기</button>' +
+      '<div style="display:flex;align-items:flex-start;gap:8px;font-size:11.5px;color:#8AAE9E;line-height:1.6;">' + svg('#ic-lock', 16) +
+      '<span>이 비밀번호로 성적 데이터가 암호화됩니다. <b>모든 계정의 비밀번호를 잃으면 복구할 수 없습니다.</b></span></div>'
+    ) + '</div>';
+  }
+
+  /// 계정은 있으나 성적을 아직 넣지 않은 상태.
+  function importScreen() {
+    if (!state.session || state.session.role !== 'admin') {
+      return '<div style="min-height:100vh;padding:26px 20px 64px;">' + panel('#ic-shield', '데이터 없음',
+        '성적이 아직 등록되지 않았습니다.<br>관리자에게 임포트를 요청하세요.',
+        '<button data-act="lock" class="clay-soft-btn" style="padding:14px;font-size:15px;">로그아웃</button>') + '</div>';
+    }
+    return '<div style="min-height:100vh;padding:26px 20px 64px;">' + panel('#ic-bars', '성적 임포트',
+      '과목별 파일(<code>&lt;과목&gt;.xlsx</code> 또는 <code>.csv</code>)이<br>들어 있는 폴더 경로를 입력하세요.',
+      field('impDir', 'C:\\성적\\2026-1학기\\data') +
+      adminMsg() +
+      '<button data-act="import" class="clay-brand-btn" style="padding:16px;font-size:16px;">불러오기</button>' +
+      '<button data-act="lock" class="clay-soft-btn" style="padding:12px;font-size:14px;">로그아웃</button>'
+    ) + '</div>';
+  }
+
+  /// 교사 계정 추가. 관리자 세션의 키를 새 교사 비밀번호로 다시 감싼다(Rust 쪽).
+  function adminPanel() {
+    if (!caps.accounts || !state.session || state.session.role !== 'admin') return '';
+    return '<div class="clay-raised" style="max-width:1080px;margin:22px auto 0;' + CARD_PAD + 'display:flex;flex-direction:column;gap:14px;">' +
+      '<div style="display:flex;align-items:center;gap:10px;color:#036242;">' + svg('#ic-teacher', 20) +
+      '<span style="font-size:16px;font-weight:800;color:#0A3D2A;">교사 계정 추가</span></div>' +
+      '<div style="font-size:12px;color:#7FA895;line-height:1.6;">담임은 <code>담임 3-2</code> 처럼, 교과교사는 <code>교과 3-2-mat, 3-1-mat</code> 처럼 적습니다. 과목 코드는 <code>' + meta.subjects.slice(0, 4).map(function (s) { return s.id; }).join(', ') + ', …</code>.</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
+      field('atUser', '아이디') + field('atName', '표시 이름') +
+      field('atPw', '비밀번호 (8자 이상)', 'password') + field('atRole', '담임 3-2  /  교과 3-2-mat') +
+      '</div>' + adminMsg() +
+      '<button data-act="addTeacher" class="clay-brand-btn" style="padding:14px;font-size:15px;align-self:flex-start;padding-left:28px;padding-right:28px;">추가</button>' +
+      '</div>';
+  }
+
+  /// "담임 3-2" / "교과 3-2-mat, 3-1-mat" → Rust Role enum 모양.
+  function parseRole(text) {
+    var t = String(text || '').trim();
+    var m = /^담임\s+(\d+)\s*-\s*(\d+)$/.exec(t);
+    if (m) return { type: 'homeroom', grade: +m[1], class: +m[2] };
+
+    m = /^교과\s+(.+)$/.exec(t);
+    if (m) {
+      var assignments = m[1].split(',').map(function (part) {
+        var p = /^\s*(\d+)\s*-\s*(\d+)\s*-\s*([a-z]+)\s*$/.exec(part);
+        if (!p) return null;
+        return { grade: +p[1], class: +p[2], subject: p[3] };
+      });
+      if (assignments.every(Boolean) && assignments.length) return { type: 'subject', assignments: assignments };
+    }
+    return null;
   }
 
   // ================================================================ 렌더 + 차트 마운트
@@ -253,8 +405,20 @@
 
   function render() {
     destroyCharts();
-    if (!meta) { root.innerHTML = '<div style="padding:60px;text-align:center;color:#4E7D68;">데이터 로딩 중…</div>'; return; }
-    if (!state.entered) { root.innerHTML = '<div style="min-height:100vh;padding:26px 20px 64px;">' + entryGate() + '</div>'; return; }
+    // Tauri 모드는 계정 생성 → 로그인 → (필요하면) 임포트 순으로 관문이 하나 더 있다.
+    if (!state.provisioned) { root.innerHTML = setupScreen(); return; }
+    if (!state.entered) {
+      // 웹 모드는 메타가 도착한 뒤에 게이트를 그린다. 먼저 그리면 메타 도착 시 다시 그려지면서
+      // 입력 중이던 비밀번호가 지워진다. (Tauri 는 로그인 전에 메타를 못 읽으므로 해당 없음.)
+      if (!meta && !caps.accounts) { root.innerHTML = '<div style="padding:60px;text-align:center;color:#4E7D68;">데이터 로딩 중…</div>'; return; }
+      root.innerHTML = '<div style="min-height:100vh;padding:26px 20px 64px;">' + entryGate() + '</div>';
+      return;
+    }
+    if (!meta) {
+      if (state.needsImport) { root.innerHTML = importScreen(); return; }
+      root.innerHTML = '<div style="padding:60px;text-align:center;color:#4E7D68;">데이터 로딩 중…</div>';
+      return;
+    }
     var body;
     if (state.tab === 'student') body = state.student ? studentDash() : studentInput();
     else body = teacherBody();
@@ -269,7 +433,10 @@
 
   function mountCharts() {
     if (state.tab === 'teacher' && state.cohort) {
-      var g = state.tGrade, sub = state.cohort.grades[g].subjects[state.tSubject];
+      var node = cohortNode();
+      if (!node) return;
+      var sub = node.subjects[state.tSubject];
+      if (!sub) return;
       chartRegistry.push(GK.histogram(document.getElementById('histCanvas'), sub.totals));
       chartRegistry.push(GK.gradeDist(document.getElementById('gradeCanvas'), sub.gradeCounts, gradeColors));
     }
@@ -279,24 +446,88 @@
   function lookup(codeRaw) {
     var code = String(codeRaw == null ? '' : codeRaw).trim().toUpperCase();
     if (!code) return;
-    fetch('public/data/students/' + encodeURIComponent(code) + '.json')
-      .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+    api.studentLookup(code)
       .then(function (d) { state.student = d; state.selSubject = meta.subjects[0].id; state.code = code; state.codeErr = false; render(); })
       .catch(function () { state.code = code; state.codeErr = true; render(); focusEl('code'); });
   }
 
-  function doEnter() {
-    var el = document.getElementById('pw'); state.pw = el ? el.value : state.pw;
-    if (state.pw === DEMO_PW) { state.entered = true; state.pwErr = false; render(); }
-    else { state.pwErr = true; render(); focusEl('pw'); }
+  function val(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; }
+
+  // Rust 커맨드는 안정적인 코드 문자열로 거절한다 (error.rs 참고).
+  function errText(e) {
+    var s = (e && e.message) ? e.message : String(e);
+    if (s.indexOf('BAD_CREDENTIALS') >= 0) return '아이디 또는 비밀번호가 올바르지 않습니다.';
+    if (s.indexOf('FORBIDDEN') >= 0) return '권한이 없습니다.';
+    if (s.indexOf('ALREADY_PROVISIONED') >= 0) return '이미 설정이 끝난 상태입니다.';
+    if (s.indexOf('NOT_PROVISIONED') >= 0) return '아직 데이터가 없습니다.';
+    return s.replace(/^[A-Z_]+:\s*/, '');
   }
 
-  // 교사 탭 첫 진입 시 코호트 데이터 지연 로드
+  function loadMeta() {
+    return api.meta().then(function (d) { meta = d; state.needsImport = false; render(); });
+  }
+
+  function doEnter() {
+    var uEl = document.getElementById('user'); if (uEl) state.user = uEl.value.trim();
+    var el = document.getElementById('pw'); state.pw = el ? el.value : state.pw;
+    api.login(state.user, state.pw)
+      .then(function (s) {
+        state.session = s; state.entered = true; state.pwErr = ''; state.pw = ''; state.adminMsg = '';
+        state.cohort = null; state.tGrade = null; state.tClass = null; state.tSubject = null;
+        // Tauri 모드는 로그인 뒤에야 메타를 읽는다. 없으면 아직 임포트 전.
+        if (caps.accounts && !meta) {
+          loadMeta().catch(function () { state.needsImport = true; render(); });
+        }
+        render();
+      })
+      .catch(function () {
+        state.pwErr = caps.accounts ? '아이디 또는 비밀번호가 올바르지 않습니다.' : '비밀번호가 올바르지 않습니다.';
+        render(); focusEl(caps.accounts ? 'user' : 'pw');
+      });
+  }
+
+  function doLock() {
+    api.logout().catch(function () {});
+    state.entered = false; state.session = null; state.pw = ''; state.user = ''; state.adminMsg = '';
+    state.student = null; state.code = '';
+    state.cohort = null; state.tGrade = null; state.tClass = null; state.tSubject = null;
+    render();
+  }
+
+  // ------- 관리자 동작 (Tauri 전용) -------
+
+  function doProvision() {
+    var u = val('suUser'), p = val('suPw'), p2 = val('suPw2');
+    if (p !== p2) { state.adminMsg = '비밀번호가 서로 다릅니다.'; render(); return; }
+    api.provision(u, p)
+      .then(function () { state.provisioned = true; state.adminMsg = ''; state.user = u; render(); focusEl('pw'); })
+      .catch(function (e) { state.adminMsg = errText(e); render(); });
+  }
+
+  function doImport() {
+    var dir = val('impDir');
+    if (!dir) { state.adminMsg = '폴더 경로를 입력하세요.'; render(); return; }
+    state.adminMsg = '불러오는 중…'; render();
+    api.importGrades(dir)
+      .then(function () { state.adminMsg = ''; return loadMeta(); })
+      .catch(function (e) { state.adminMsg = errText(e); render(); });
+  }
+
+  function doAddTeacher() {
+    var role = parseRole(val('atRole'));
+    if (!role) { state.adminMsg = '역할 형식이 올바르지 않습니다. 예: 담임 3-2 / 교과 3-2-mat'; render(); return; }
+    api.addTeacher({ username: val('atUser'), displayName: val('atName'), password: val('atPw'), role: role })
+      .then(function () { state.adminMsg = '교사 계정을 추가했습니다.'; render(); })
+      .catch(function (e) { state.adminMsg = errText(e); render(); });
+  }
+
+  // 교사 탭 첫 진입 시 코호트 데이터 지연 로드.
+  // Tauri 모드에서는 이 응답이 이미 역할대로 필터링되어 있다 (Rust 가 거름).
   function ensureCohort() {
     if (state.cohort || state._cohortLoading) return;
     state._cohortLoading = true;
-    fetch('public/data/cohort.json').then(function (r) { return r.json(); }).then(function (d) {
-      state.cohort = d; state.tGrade = meta.grades[0]; state.tSubject = meta.subjects[0].id; state._cohortLoading = false; render();
+    api.cohort().then(function (d) {
+      state.cohort = d; state._cohortLoading = false; render();
     }).catch(function () { state._cohortLoading = false; });
   }
 
@@ -314,18 +545,24 @@
     else if (act === 'gradeInfo') { var gi = +t.getAttribute('data-grade'); var sid = t.getAttribute('data-sid'); if (gi >= 1 && gi <= 5) { var modal = document.createElement('div'); modal.innerHTML = gradeInfoModal(gi, sid); root.appendChild(modal.firstChild); } }
     else if (act === 'closeModal') { var ov = document.querySelector('.grade-modal-overlay'); if (ov) ov.remove(); }
     else if (act === 'enter') { doEnter(); }
-    else if (act === 'lock') { state.entered = false; state.pw = ''; state.student = null; state.code = ''; render(); }
-    else if (act === 'gGrade') { state.tGrade = +t.getAttribute('data-grade'); render(); }
+    else if (act === 'lock') { doLock(); }
+    else if (act === 'provision') { doProvision(); }
+    else if (act === 'import') { doImport(); }
+    else if (act === 'addTeacher') { doAddTeacher(); }
+    else if (act === 'gGrade') { state.tGrade = +t.getAttribute('data-grade'); state.tClass = null; render(); }
+    else if (act === 'tClass') { state.tClass = +t.getAttribute('data-class'); render(); }
     else if (act === 'tSubject') { state.tSubject = t.getAttribute('data-sid'); render(); }
   }
   function onKeydown(e) {
     if (e.key !== 'Enter') return;
     if (e.target.id === 'code') lookup(e.target.value);
-    else if (e.target.id === 'pw') doEnter();
+    else if (e.target.id === 'pw' || e.target.id === 'user') doEnter();
+    else if (e.target.id === 'suPw2') doProvision();
+    else if (e.target.id === 'impDir') doImport();
   }
   function onInput(e) {
     if (e.target.id === 'code' && state.codeErr) { state.codeErr = false; strip('codeErr', 'code'); }
-    if (e.target.id === 'pw' && state.pwErr) { state.pwErr = false; strip('pwErr', 'pw'); }
+    if ((e.target.id === 'pw' || e.target.id === 'user') && state.pwErr) { state.pwErr = ''; strip('pwErr', 'pw'); }
   }
   function strip(errId, inputId) { var er = document.getElementById(errId); if (er) er.remove(); var inp = document.getElementById(inputId); if (inp) inp.style.animation = 'none'; }
 
@@ -335,9 +572,21 @@
     root.addEventListener('click', onClick);
     root.addEventListener('keydown', onKeydown);
     root.addEventListener('input', onInput);
+
+    if (caps.accounts) {
+      // Tauri: 관리자 계정 유무를 먼저 묻는다. 메타는 로그인 뒤에 읽는다.
+      render();
+      api.isProvisioned()
+        .then(function (p) { state.provisioned = p; render(); })
+        .catch(function () { state.provisioned = false; render(); });
+      return;
+    }
+
+    // 웹: 예전 그대로. 메타는 정적 파일이라 바로 읽는다.
     render();
-    fetch('public/data/meta.json').then(function (r) { return r.json(); }).then(function (d) { meta = d; render(); })
-      .catch(function () { root.innerHTML = '<div style="padding:60px;text-align:center;color:#B54B3A;">메타 로드 실패 — 빌드 필요: <code>npm run gen-sample &amp;&amp; npm run build</code></div>'; });
+    loadMeta().catch(function () {
+      root.innerHTML = '<div style="padding:60px;text-align:center;color:#B54B3A;">메타 로드 실패 — 빌드 필요: <code>npm run gen-sample &amp;&amp; npm run build</code></div>';
+    });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
