@@ -28,6 +28,52 @@
     return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
+  // 기술통계: 평균, 모집단 표준편차, min/q1/median/q3/max (사분위=선형보간 type7).
+  // src-tauri/core/src/grade.rs · scripts/grade.mjs 와 동일 알고리즘의 브라우저 포팅.
+  function percentile(sorted, p) {
+    var n = sorted.length;
+    if (n === 1) return sorted[0];
+    var idx = p * (n - 1), lo = Math.floor(idx), hi = Math.ceil(idx), frac = idx - lo;
+    return sorted[lo] + (sorted[hi] - sorted[lo]) * frac;
+  }
+  GK.summaryStats = function (values) {
+    var n = values.length;
+    var sorted = values.slice().sort(function (a, b) { return a - b; });
+    var mean = sorted.reduce(function (a, b) { return a + b; }, 0) / n;
+    var variance = sorted.reduce(function (a, b) { return a + Math.pow(b - mean, 2); }, 0) / n;
+    return {
+      n: n, mean: mean, sd: Math.sqrt(variance), min: sorted[0],
+      q1: percentile(sorted, 0.25), median: percentile(sorted, 0.5), q3: percentile(sorted, 0.75),
+      max: sorted[n - 1]
+    };
+  };
+
+  // 세션에 보이는 여러 반의 GroupNode를 하나로 합친다 — "전체 반" 통계용.
+  // nodes: [{count, subjects:{sid:{name,totals,gradeCounts}}}, ...] (반 하나가 undefined 여도 무시)
+  GK.combineClassNodes = function (nodes) {
+    var count = 0;
+    var bySubject = {};
+    nodes.forEach(function (node) {
+      if (!node) return;
+      count += node.count || 0;
+      Object.keys(node.subjects || {}).forEach(function (sid) {
+        var d = node.subjects[sid];
+        if (!d) return;
+        if (!bySubject[sid]) bySubject[sid] = { name: d.name, totals: [], gradeCounts: [0, 0, 0, 0, 0, 0] };
+        var acc = bySubject[sid];
+        acc.totals = acc.totals.concat(d.totals);
+        for (var i = 0; i < 6; i++) acc.gradeCounts[i] += (d.gradeCounts[i] || 0);
+      });
+    });
+    var subjects = {};
+    Object.keys(bySubject).forEach(function (sid) {
+      var acc = bySubject[sid];
+      if (!acc.totals.length) return;
+      subjects[sid] = { name: acc.name, totals: acc.totals, gradeCounts: acc.gradeCounts, stats: GK.summaryStats(acc.totals) };
+    });
+    return { count: count, subjects: subjects };
+  };
+
   // 고정 색상의 밝은 그라디언트 스탑 — 매 렌더마다 다시 계산할 필요 없어 한 번만 구해둔다.
   var TINT_SLOPE_DOT = tint('#036242', 0.42);
   var TINT_BADGE_POS = tint('#12936A', 0.4);
