@@ -13,3 +13,6 @@ public/data/
 dist/
 src-tauri/target/
 src-tauri/gen/
+
+# superpowers subagent-driven-development scratch (progress ledger, briefs, reports)
+.superpowers/
