@@ -54,6 +54,7 @@ body {
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
 }
 a { color: var(--green-800); }
 a:hover { color: var(--green-700); }
@@ -61,6 +62,14 @@ input::placeholder { color: var(--text-muted); }
 button { font-family: inherit; }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: rgba(3,98,66,0.18); border-radius: 8px; }
+
+/* ---- Keyboard focus ring (buttons/links) — clay-tinted, mouse clicks stay clean ---- */
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid rgba(3, 98, 66, 0.45);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
 
 /* ---- Clay classes ---- */
 
@@ -101,6 +110,14 @@ button { font-family: inherit; }
     6px 8px 16px rgba(3, 60, 42, 0.1),
     inset 3px 4px 8px rgba(255, 255, 255, 0.8),
     inset -3px -4px 8px rgba(3, 60, 42, 0.06);
+}
+
+/* 작은 클레이 뱃지(등급 숫자, 반영요소 칩, 변화량 칩 등) — 배경·글자색은 인라인이 정하고, 여긴 입체감만 얹는다 */
+.clay-badge {
+  box-shadow:
+    3px 4px 7px rgba(3, 60, 42, 0.18),
+    inset 2px 2px 4px rgba(255, 255, 255, 0.55),
+    inset -2px -2px 5px rgba(3, 60, 42, 0.12);
 }
 
 /* 보조 버튼 */

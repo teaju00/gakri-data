@@ -34,17 +34,17 @@
   var fmt = function (v) { return (Math.round(v * 10) / 10).toFixed(1); };
   var esc = function (s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
   var subjMeta = function (id) { return meta.subjects.find(function (s) { return s.id === id; }); };
-  var svg = function (id, sz) { return '<svg width="' + sz + '" height="' + sz + '"><use href="' + id + '"></use></svg>'; };
+  var svg = function (id, sz) { return '<svg width="' + sz + '" height="' + sz + '" aria-hidden="true" focusable="false"><use href="' + id + '"></use></svg>'; };
 
   // ================================================================ 탭 바
   function tabbar() {
     var tab = function (key, icon, label) {
       var on = state.tab === key;
       var btnClass = on ? 'clay-tab-active' : 'clay-soft-btn';
-      return '<button data-act="tab" data-tab="' + key + '" class="' + btnClass + '" style="flex:1;padding:13px;display:flex;align-items:center;justify-content:center;gap:9px;">' + svg(icon, 20) + label + '</button>';
+      return '<button data-act="tab" data-tab="' + key + '" class="' + btnClass + '" aria-pressed="' + on + '" style="flex:1;padding:13px;display:flex;align-items:center;justify-content:center;gap:9px;">' + svg(icon, 20) + label + '</button>';
     };
-    return '<div class="clay-inset" style="max-width:1080px;margin:0 auto 22px;display:flex;gap:12px;padding:8px;">' +
-      tab('student', '#ic-student', '학생 조회') + tab('teacher', '#ic-teacher', '교사 진단') + '</div>';
+    return '<nav class="clay-inset" aria-label="화면 전환" style="max-width:1080px;margin:0 auto 22px;display:flex;gap:12px;padding:8px;">' +
+      tab('student', '#ic-student', '학생 조회') + tab('teacher', '#ic-teacher', '교사 진단') + '</nav>';
   }
 
   // ================================================================ 학생 탭
@@ -77,7 +77,7 @@
     var color = up ? '#12936A' : '#6FBE9E'; // 하강도 경고색(빨강) 아님 — 중립 그린
     var icon = up ? '#ic-up' : '#ic-down';
     var txt = (up ? '+' : '') + d + '%p';
-    return '<span style="display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:800;color:#fff;background:' + color + ';border-radius:9px;padding:3px 8px;">' + svg(icon, 13) + txt + '</span>';
+    return '<span class="clay-badge" style="display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:800;color:#fff;background:' + color + ';border-radius:9px;padding:3px 8px;">' + svg(icon, 13) + txt + '</span>';
   }
 
   // 등급별 설명 (백분율·수준 텍스트 표시 안 함 — 시각 바만)
@@ -158,7 +158,7 @@
       var compsStr = order.filter(function (c) { return d.comps[c]; }).map(function (c) { return c + ' ' + d.comps[c].weight + '%'; }).join(' · ');
       return '<div class="clay-table-row" style="display:grid;grid-template-columns:1.4fr 1fr 0.8fr 2.2fr;gap:12px;align-items:center;padding:11px 14px;">' +
         '<span style="font-size:14.5px;font-weight:700;color:#0A3D2A;">' + s.name + '</span><span style="font-size:14px;font-weight:700;color:#036242;">' + fmt(d.total) + '</span>' +
-        '<span><span data-act="gradeInfo" data-sid="' + s.id + '" data-grade="' + d.grade + '" style="cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:9px;font-size:14px;font-weight:800;color:' + gradeText[d.grade] + ';background:' + gradeColors[d.grade] + ';">' + d.grade + '</span></span>' +
+        '<span><span data-act="gradeInfo" data-sid="' + s.id + '" data-grade="' + d.grade + '" class="clay-badge" style="cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:9px;font-size:14px;font-weight:800;color:' + gradeText[d.grade] + ';background:' + gradeColors[d.grade] + ';">' + d.grade + '</span></span>' +
         '<span style="font-size:12.5px;color:#4E7D68;">' + compsStr + '</span></div>';
     }).join('');
 
@@ -166,7 +166,7 @@
       // header
       '<div class="clay-raised" style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 22px;">' +
       '<div style="display:flex;align-items:center;gap:16px;"><button data-act="back" title="코드 조회로" class="clay-soft-btn" style="width:46px;height:46px;padding:0;display:flex;align-items:center;justify-content:center;">' + svg('#ic-back', 22) + '</button>' +
-      '<div><div style="display:flex;align-items:center;gap:10px;"><span style="font-size:12px;font-weight:700;letter-spacing:0.16em;color:#7FA895;">CODE</span><span style="font-size:24px;font-weight:800;letter-spacing:0.04em;color:#0A3D2A;">' + esc(st.code) + '</span><span style="font-size:14px;font-weight:700;color:#036242;background:#DCEEE5;border-radius:9px;padding:4px 11px;">' + st.grade + '학년</span></div>' +
+      '<div><div style="display:flex;align-items:center;gap:10px;"><span style="font-size:12px;font-weight:700;letter-spacing:0.16em;color:#7FA895;">CODE</span><span style="font-size:24px;font-weight:800;letter-spacing:0.04em;color:#0A3D2A;">' + esc(st.code) + '</span><span style="font-size:14px;font-weight:700;color:#036242;background:#DCEEE5;border-radius:9px;padding:4px 11px;" class="clay-badge">' + st.grade + '학년</span></div>' +
       '<div style="font-size:12px;color:#7FA895;margin-top:4px;">내 학습 점검 · 다른 학생과 비교하지 않습니다</div></div></div>' +
       '<div style="text-align:right;"><div style="font-size:12px;color:#7FA895;font-weight:600;">평균 등급</div><div style="display:flex;align-items:baseline;gap:5px;justify-content:flex-end;"><span style="font-size:30px;font-weight:800;color:' + gradeColors[avgG] + ';">' + fmt(st.avg) + '</span><span style="font-size:13px;color:#7FA895;font-weight:600;">등급</span></div></div>' +
       '</div>' +
@@ -271,7 +271,8 @@
       return '<button data-act="gGrade" data-grade="' + gg + '" class="' + btnCls + '" style="padding:9px 16px;font-size:14px;">' + gg + '학년</button>';
     }).join('');
 
-    var classBtns = allowedClasses(g).map(function (cc) {
+    var classes = allowedClasses(g);
+    var classBtns = classes.map(function (cc) {
       var btnCls = (cc === state.tClass) ? 'clay-tab-active' : 'clay-soft-btn';
       return '<button data-act="tClass" data-class="' + cc + '" class="' + btnCls + '" style="padding:9px 16px;font-size:14px;">' + cc + '반</button>';
     }).join('');
@@ -284,9 +285,36 @@
       var btnCls = (s.id === sid) ? 'clay-tab-active' : 'clay-soft-btn';
       return '<button data-act="tSubject" data-sid="' + s.id + '" class="' + btnCls + '" style="padding:8px 14px;font-size:13px;display:flex;align-items:center;gap:6px;">' + svg(s.icon, 16) + s.name + '</button>';
     }).join('');
-    var boxItems = visibleSubjects.map(function (s) { var d = node.subjects[s.id]; return { name: s.name, totals: d.totals, stats: d.stats }; });
     var statTile = function (label, val) { return '<div class="clay-inset" style="flex:1;text-align:center;padding:14px 10px;border-radius:16px;"><div style="font-size:22px;font-weight:800;color:#036242;">' + val + '</div><div style="font-size:11.5px;color:#4E7D68;font-weight:600;margin-top:2px;">' + label + '</div></div>'; };
     var groupLabel = classScoped() ? (g + '학년 ' + state.tClass + '반') : (g + '학년');
+
+    // 상자그림: 반 단위 데이터가 있으면(Tauri) 현재 과목을 반별로 비교, 없으면(웹 데모) 과목별 비교로 대체.
+    // 반별 비교는 세션이 허용된 반만 나온다 — allowedClasses() 가 이미 역할대로 걸러진 목록이라
+    // 담임은 자기 반 1개, 교과교사는 배정된 반들, 관리자는 학년 전체 반이 보인다.
+    var boxByClass = classScoped();
+    var boxItems = boxByClass
+      ? classes.reduce(function (acc, cc) {
+          var byC = state.cohort.classes[g] && state.cohort.classes[g][cc];
+          var d = byC && byC.subjects[sid];
+          if (d) acc.push({ name: cc + '반', totals: d.totals, stats: d.stats });
+          return acc;
+        }, [])
+      : visibleSubjects.map(function (s) { var d = node.subjects[s.id]; return { name: s.name, totals: d.totals, stats: d.stats }; });
+    var boxTitle = boxByClass ? (esc(gsub.name) + ' 반별 산포') : '과목별 산포';
+    var boxHint = boxByClass
+      ? '반마다 산포 크거나 이상치 많으면 이질 학급 → 소집단·차별화.'
+      : '산포 크거나 이상치 많으면 이질 학급 → 소집단·차별화.';
+
+    // 카드 두 개(5등급 분포·상자그림)는 반별/과목별 모드 둘 다 그대로 쓰고, 감싸는 레이아웃만 다르다
+    // (반별은 박스가 많을 수 있어 전체 폭, 과목별은 기존 2열).
+    var gradeDistCard = '<div class="clay-raised" style="' + CARD_PAD + '"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;color:#036242;">' + svg('#ic-radar', 20) + '<span style="font-size:16px;font-weight:800;color:#0A3D2A;">5등급 분포</span></div>' +
+      '<div style="position:relative;height:230px;padding:16px;' + CHART + '"><canvas id="gradeCanvas"></canvas></div></div>';
+    var boxPlotCard = '<div class="clay-raised" style="' + CARD_PAD + '"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;color:#036242;">' + svg('#ic-box', 20) + '<span style="font-size:16px;font-weight:800;color:#0A3D2A;">' + boxTitle + ' (상자그림)</span></div>' +
+      '<div style="font-size:12px;color:#7FA895;margin-bottom:8px;">' + boxHint + '</div>' +
+      '<div style="padding:14px;' + CHART + '">' + GK.boxPlotSVG(boxItems) + '</div></div>';
+    var distSection = boxByClass
+      ? gradeDistCard + boxPlotCard
+      : '<div style="display:grid;grid-template-columns:1fr 1.3fr;gap:22px;" class="teacher-grid">' + gradeDistCard + boxPlotCard + '</div>';
 
     return '<div style="max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:22px;">' +
       // banner + controls
@@ -305,14 +333,9 @@
       '<div class="clay-raised" style="' + CARD_PAD + '"><div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;color:#036242;">' + svg('#ic-bars', 22) + '<span style="font-size:17px;font-weight:800;color:#0A3D2A;">' + esc(gsub.name) + ' ' + groupLabel + ' 점수 분포</span></div>' +
       '<div style="font-size:12px;color:#7FA895;margin-bottom:8px;">봉우리가 둘로 갈리면(이봉) 전체수업보다 두 트랙 차별화를 고려.</div>' +
       '<div style="position:relative;height:250px;padding:16px;' + CHART + '"><canvas id="histCanvas"></canvas></div></div>' +
-      // grade dist + box
-      '<div style="display:grid;grid-template-columns:1fr 1.3fr;gap:22px;" class="teacher-grid">' +
-      '<div class="clay-raised" style="' + CARD_PAD + '"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;color:#036242;">' + svg('#ic-radar', 20) + '<span style="font-size:16px;font-weight:800;color:#0A3D2A;">5등급 분포</span></div>' +
-      '<div style="position:relative;height:230px;padding:16px;' + CHART + '"><canvas id="gradeCanvas"></canvas></div></div>' +
-      '<div class="clay-raised" style="' + CARD_PAD + '"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;color:#036242;">' + svg('#ic-box', 20) + '<span style="font-size:16px;font-weight:800;color:#0A3D2A;">과목별 산포 (상자그림)</span></div>' +
-      '<div style="font-size:12px;color:#7FA895;margin-bottom:8px;">산포 크거나 이상치 많으면 이질 학급 → 소집단·차별화.</div>' +
-      '<div style="padding:14px;' + CHART + '">' + GK.boxPlotSVG(boxItems) + '</div></div>' +
-      '</div></div>' +
+      // grade dist + box — 반별 비교는 박스 개수가 많을 수 있어 전체 폭으로, 과목별 비교(웹 모드)는 기존 2열 유지.
+      distSection +
+      '</div>' +
       adminPanel();
   }
 
@@ -339,7 +362,7 @@
 
   /// 최초 실행. 관리자 계정을 만들면서 vault 를 여는 키가 생성된다.
   function setupScreen() {
-    return '<div style="min-height:100vh;padding:26px 20px 64px;">' + panel('#ic-shield', '최초 설정',
+    return '<main style="min-height:100vh;min-height:100dvh;padding:26px 20px 64px;">' + panel('#ic-shield', '최초 설정',
       '이 컴퓨터에서 처음 실행합니다.<br>관리자 계정을 만들어 주세요.',
       field('suUser', '관리자 아이디') +
       field('suPw', '비밀번호 (8자 이상)', 'password') +
@@ -348,23 +371,23 @@
       '<button data-act="provision" class="clay-brand-btn" style="padding:16px;font-size:16px;">계정 만들기</button>' +
       '<div style="display:flex;align-items:flex-start;gap:8px;font-size:11.5px;color:#8AAE9E;line-height:1.6;">' + svg('#ic-lock', 16) +
       '<span>이 비밀번호로 성적 데이터가 암호화됩니다. <b>모든 계정의 비밀번호를 잃으면 복구할 수 없습니다.</b></span></div>'
-    ) + '</div>';
+    ) + '</main>';
   }
 
   /// 계정은 있으나 성적을 아직 넣지 않은 상태.
   function importScreen() {
     if (!state.session || state.session.role !== 'admin') {
-      return '<div style="min-height:100vh;padding:26px 20px 64px;">' + panel('#ic-shield', '데이터 없음',
+      return '<main style="min-height:100vh;min-height:100dvh;padding:26px 20px 64px;">' + panel('#ic-shield', '데이터 없음',
         '성적이 아직 등록되지 않았습니다.<br>관리자에게 임포트를 요청하세요.',
-        '<button data-act="lock" class="clay-soft-btn" style="padding:14px;font-size:15px;">로그아웃</button>') + '</div>';
+        '<button data-act="lock" class="clay-soft-btn" style="padding:14px;font-size:15px;">로그아웃</button>') + '</main>';
     }
-    return '<div style="min-height:100vh;padding:26px 20px 64px;">' + panel('#ic-bars', '성적 임포트',
+    return '<main style="min-height:100vh;min-height:100dvh;padding:26px 20px 64px;">' + panel('#ic-bars', '성적 임포트',
       '과목별 파일(<code>&lt;과목&gt;.xlsx</code> 또는 <code>.csv</code>)이<br>들어 있는 폴더 경로를 입력하세요.',
       field('impDir', 'C:\\성적\\2026-1학기\\data') +
       adminMsg() +
       '<button data-act="import" class="clay-brand-btn" style="padding:16px;font-size:16px;">불러오기</button>' +
       '<button data-act="lock" class="clay-soft-btn" style="padding:12px;font-size:14px;">로그아웃</button>'
-    ) + '</div>';
+    ) + '</main>';
   }
 
   /// 교사 계정 추가. 관리자 세션의 키를 새 교사 비밀번호로 다시 감싼다(Rust 쪽).
@@ -410,19 +433,19 @@
     if (!state.entered) {
       // 웹 모드는 메타가 도착한 뒤에 게이트를 그린다. 먼저 그리면 메타 도착 시 다시 그려지면서
       // 입력 중이던 비밀번호가 지워진다. (Tauri 는 로그인 전에 메타를 못 읽으므로 해당 없음.)
-      if (!meta && !caps.accounts) { root.innerHTML = '<div style="padding:60px;text-align:center;color:#4E7D68;">데이터 로딩 중…</div>'; return; }
-      root.innerHTML = '<div style="min-height:100vh;padding:26px 20px 64px;">' + entryGate() + '</div>';
+      if (!meta && !caps.accounts) { root.innerHTML = '<div role="status" aria-live="polite" style="padding:60px;text-align:center;color:#4E7D68;">데이터 로딩 중…</div>'; return; }
+      root.innerHTML = '<main style="min-height:100vh;min-height:100dvh;padding:26px 20px 64px;">' + entryGate() + '</main>';
       return;
     }
     if (!meta) {
       if (state.needsImport) { root.innerHTML = importScreen(); return; }
-      root.innerHTML = '<div style="padding:60px;text-align:center;color:#4E7D68;">데이터 로딩 중…</div>';
+      root.innerHTML = '<div role="status" aria-live="polite" style="padding:60px;text-align:center;color:#4E7D68;">데이터 로딩 중…</div>';
       return;
     }
     var body;
     if (state.tab === 'student') body = state.student ? studentDash() : studentInput();
     else body = teacherBody();
-    root.innerHTML = '<div style="min-height:100vh;padding:26px 20px 64px;">' + tabbar() + body + '</div>';
+    root.innerHTML = '<main style="min-height:100vh;min-height:100dvh;padding:26px 20px 64px;">' + tabbar() + body + '</main>';
     mountCharts();
   }
 
@@ -585,7 +608,7 @@
     // 웹: 예전 그대로. 메타는 정적 파일이라 바로 읽는다.
     render();
     loadMeta().catch(function () {
-      root.innerHTML = '<div style="padding:60px;text-align:center;color:#B54B3A;">메타 로드 실패 — 빌드 필요: <code>npm run gen-sample &amp;&amp; npm run build</code></div>';
+      root.innerHTML = '<div role="alert" style="padding:60px;text-align:center;color:#B54B3A;">메타 로드 실패 — 빌드 필요: <code>npm run gen-sample &amp;&amp; npm run build</code></div>';
     });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
