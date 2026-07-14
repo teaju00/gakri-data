@@ -231,6 +231,11 @@
   function allowedClasses(g) { return classScoped() ? numKeys(state.cohort.classes[g]) : []; }
   function cohortNode() {
     if (!classScoped()) return state.cohort.grades[state.tGrade];
+    if (state.tClass === 'all') {
+      var byClassAll = state.cohort.classes[state.tGrade] || {};
+      var nodes = allowedClasses(state.tGrade).map(function (c) { return byClassAll[c]; });
+      return GK.combineClassNodes(nodes);
+    }
     var byClass = state.cohort.classes[state.tGrade];
     return byClass && byClass[state.tClass];
   }
@@ -241,7 +246,8 @@
     if (gs.indexOf(state.tGrade) < 0) state.tGrade = gs[0];
     if (classScoped()) {
       var cs = allowedClasses(state.tGrade);
-      if (cs.indexOf(state.tClass) < 0) state.tClass = cs[0];
+      var classValid = state.tClass === 'all' ? cs.length > 1 : cs.indexOf(state.tClass) >= 0;
+      if (!classValid) state.tClass = cs[0];
     }
     var node = cohortNode();
     if (!node) return false;
@@ -275,7 +281,9 @@
     var classBtns = classes.map(function (cc) {
       var btnCls = (cc === state.tClass) ? 'clay-tab-active' : 'clay-soft-btn';
       return '<button data-act="tClass" data-class="' + cc + '" class="' + btnCls + '" style="padding:9px 16px;font-size:14px;">' + cc + '반</button>';
-    }).join('');
+    }).join('') + (classes.length > 1
+      ? '<button data-act="tClass" data-class="all" class="' + (state.tClass === 'all' ? 'clay-tab-active' : 'clay-soft-btn') + '" style="padding:9px 16px;font-size:14px;">전체</button>'
+      : '');
     var classRow = classBtns
       ? '<div style="width:1px;height:24px;background:rgba(3,98,66,0.12);"></div><div style="display:flex;gap:8px;">' + classBtns + '</div>'
       : '';
@@ -286,7 +294,7 @@
       return '<button data-act="tSubject" data-sid="' + s.id + '" class="' + btnCls + '" style="padding:8px 14px;font-size:13px;display:flex;align-items:center;gap:6px;">' + svg(s.icon, 16) + s.name + '</button>';
     }).join('');
     var statTile = function (label, val) { return '<div class="clay-inset" style="flex:1;text-align:center;padding:14px 10px;border-radius:16px;"><div style="font-size:22px;font-weight:800;color:#036242;">' + val + '</div><div style="font-size:11.5px;color:#4E7D68;font-weight:600;margin-top:2px;">' + label + '</div></div>'; };
-    var groupLabel = classScoped() ? (g + '학년 ' + state.tClass + '반') : (g + '학년');
+    var groupLabel = classScoped() ? (g + '학년 ' + (state.tClass === 'all' ? '전체' : state.tClass + '반')) : (g + '학년');
 
     // 상자그림: 반 단위 데이터가 있으면(Tauri) 현재 과목을 반별로 비교, 없으면(웹 데모) 과목별 비교로 대체.
     // 반별 비교는 세션이 허용된 반만 나온다 — allowedClasses() 가 이미 역할대로 걸러진 목록이라
@@ -573,7 +581,7 @@
     else if (act === 'import') { doImport(); }
     else if (act === 'addTeacher') { doAddTeacher(); }
     else if (act === 'gGrade') { state.tGrade = +t.getAttribute('data-grade'); state.tClass = null; render(); }
-    else if (act === 'tClass') { state.tClass = +t.getAttribute('data-class'); render(); }
+    else if (act === 'tClass') { var cv = t.getAttribute('data-class'); state.tClass = cv === 'all' ? 'all' : +cv; render(); }
     else if (act === 'tSubject') { state.tSubject = t.getAttribute('data-sid'); render(); }
   }
   function onKeydown(e) {
