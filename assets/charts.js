@@ -322,12 +322,18 @@
       '<linearGradient id="boxHi" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.7"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></linearGradient>' +
       '<radialGradient id="dotFill" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="' + TINT_DOT_FILL + '"/><stop offset="100%" stop-color="#0A7A54"/></radialGradient>' +
       '</defs>');
+    var band = plotW / items.length;
+    // 현재 선택된 반(it.active) 배경 강조 — 그리드보다 먼저 그려서 그 위에 얹힌다.
+    items.forEach(function (it, i) {
+      if (!it.active) return;
+      var hlcx = padL + band * (i + 0.5);
+      svg.push('<rect x="' + (hlcx - band / 2 + 1) + '" y="' + padT + '" width="' + (band - 2) + '" height="' + plotH + '" rx="8" fill="rgba(3,98,66,0.07)"/>');
+    });
     // y 격자 + 라벨
     [0, 25, 50, 75, 100].forEach(function (t) {
       svg.push('<line x1="' + padL + '" y1="' + y(t) + '" x2="' + (W - padR) + '" y2="' + y(t) + '" stroke="rgba(3,60,42,0.08)" stroke-width="1"/>');
       svg.push('<text x="' + (padL - 6) + '" y="' + (y(t) + 3) + '" text-anchor="end" font-size="10" fill="#7FA895">' + t + '</text>');
     });
-    var band = plotW / items.length;
     items.forEach(function (it, i) {
       var cx = padL + band * (i + 0.5), bw = Math.min(band * 0.5, 46);
       var s = it.stats, iqr = s.q3 - s.q1, loF = s.q1 - 1.5 * iqr, hiF = s.q3 + 1.5 * iqr;
@@ -348,8 +354,8 @@
       svg.push('<line x1="' + (cx - bw / 2) + '" y1="' + y(s.median) + '" x2="' + (cx + bw / 2) + '" y2="' + y(s.median) + '" stroke="#024C34" stroke-width="2.4"/>');
       // 이상치 — 작은 볼록 구슬
       outliers.forEach(function (v) { svg.push('<circle cx="' + cx + '" cy="' + y(v) + '" r="3" fill="url(#dotFill)" filter="url(#dotShadow)" opacity="0.9"/>'); });
-      // 라벨
-      svg.push('<text x="' + cx + '" y="' + (H - 12) + '" text-anchor="middle" font-size="12" font-weight="700" fill="#0A3D2A">' + escXml(it.name) + '</text>');
+      // 라벨 — 현재 선택된 반은 브랜드색으로 강조.
+      svg.push('<text x="' + cx + '" y="' + (H - 12) + '" text-anchor="middle" font-size="12" font-weight="700" fill="' + (it.active ? '#036242' : '#0A3D2A') + '">' + escXml(it.name) + '</text>');
     });
     svg.push('</svg>');
     return svg.join('');

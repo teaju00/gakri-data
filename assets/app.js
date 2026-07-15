@@ -301,12 +301,13 @@
     // 상자그림: 반 단위 데이터가 있으면(Tauri) 현재 과목을 반별로 비교, 없으면(웹 데모) 과목별 비교로 대체.
     // 반별 비교는 세션이 허용된 반만 나온다 — allowedClasses() 가 이미 역할대로 걸러진 목록이라
     // 담임은 자기 반 1개, 교과교사는 배정된 반들, 관리자는 학년 전체 반이 보인다.
-    var boxByClass = classScoped() && state.boxView !== 'subject';
+    // 반이 하나뿐이면(담임) 반별 비교는 박스 1개짜리라 무의미 — 과목별로 기본값을 강제한다.
+    var boxByClass = classScoped() && classes.length > 1 && state.boxView !== 'subject';
     var boxItems = boxByClass
       ? classes.reduce(function (acc, cc) {
           var byC = state.cohort.classes[g] && state.cohort.classes[g][cc];
           var d = byC && byC.subjects[sid];
-          if (d) acc.push({ name: cc + '반', totals: d.totals, stats: d.stats });
+          if (d) acc.push({ name: cc + '반', totals: d.totals, stats: d.stats, active: cc === state.tClass });
           return acc;
         }, [])
       : visibleSubjects.map(function (s) { var d = node.subjects[s.id]; return { name: s.name, totals: d.totals, stats: d.stats }; });
@@ -319,7 +320,7 @@
     // (반별은 박스가 많을 수 있어 전체 폭, 과목별은 기존 2열).
     var gradeDistCard = '<div class="clay-raised" style="' + CARD_PAD + '"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;color:#036242;">' + svg('#ic-radar', 20) + '<span style="font-size:16px;font-weight:800;color:#0A3D2A;">5등급 분포</span></div>' +
       '<div style="position:relative;height:230px;padding:16px;' + CHART + '"><canvas id="gradeCanvas"></canvas></div></div>';
-    var boxToggle = classScoped()
+    var boxToggle = classScoped() && classes.length > 1
       ? '<div class="clay-inset" style="display:inline-flex;gap:4px;padding:4px;border-radius:12px;flex:none;">' +
           '<button data-act="boxView" data-view="class" class="' + (boxByClass ? 'clay-tab-active' : 'clay-soft-btn') + '" style="padding:6px 12px;font-size:12px;">반별</button>' +
           '<button data-act="boxView" data-view="subject" class="' + (!boxByClass ? 'clay-tab-active' : 'clay-soft-btn') + '" style="padding:6px 12px;font-size:12px;">과목별</button>' +
