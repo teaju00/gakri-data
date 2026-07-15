@@ -20,7 +20,9 @@
     provisioned: !caps.accounts, needsImport: false, adminMsg: '',
     entered: false, user: '', pw: '', pwErr: '', session: null,
     code: '', codeErr: false, student: null, selSubject: null,
-    cohort: null, tGrade: null, tClass: null, tSubject: null, _cohortLoading: false
+    cohort: null, tGrade: null, tClass: null, tSubject: null, _cohortLoading: false,
+    // boxView: 상자그림 비교 축. null(기본, classScoped 세션이면 반별) | 'class' | 'subject'.
+    boxView: null
   };
   var root;
   var chartRegistry = [];
@@ -299,7 +301,7 @@
     // 상자그림: 반 단위 데이터가 있으면(Tauri) 현재 과목을 반별로 비교, 없으면(웹 데모) 과목별 비교로 대체.
     // 반별 비교는 세션이 허용된 반만 나온다 — allowedClasses() 가 이미 역할대로 걸러진 목록이라
     // 담임은 자기 반 1개, 교과교사는 배정된 반들, 관리자는 학년 전체 반이 보인다.
-    var boxByClass = classScoped();
+    var boxByClass = classScoped() && state.boxView !== 'subject';
     var boxItems = boxByClass
       ? classes.reduce(function (acc, cc) {
           var byC = state.cohort.classes[g] && state.cohort.classes[g][cc];
@@ -317,7 +319,15 @@
     // (반별은 박스가 많을 수 있어 전체 폭, 과목별은 기존 2열).
     var gradeDistCard = '<div class="clay-raised" style="' + CARD_PAD + '"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;color:#036242;">' + svg('#ic-radar', 20) + '<span style="font-size:16px;font-weight:800;color:#0A3D2A;">5등급 분포</span></div>' +
       '<div style="position:relative;height:230px;padding:16px;' + CHART + '"><canvas id="gradeCanvas"></canvas></div></div>';
-    var boxPlotCard = '<div class="clay-raised" style="' + CARD_PAD + '"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;color:#036242;">' + svg('#ic-box', 20) + '<span style="font-size:16px;font-weight:800;color:#0A3D2A;">' + boxTitle + ' (상자그림)</span></div>' +
+    var boxToggle = classScoped()
+      ? '<div class="clay-inset" style="display:inline-flex;gap:4px;padding:4px;border-radius:12px;flex:none;">' +
+          '<button data-act="boxView" data-view="class" class="' + (boxByClass ? 'clay-tab-active' : 'clay-soft-btn') + '" style="padding:6px 12px;font-size:12px;">반별</button>' +
+          '<button data-act="boxView" data-view="subject" class="' + (!boxByClass ? 'clay-tab-active' : 'clay-soft-btn') + '" style="padding:6px 12px;font-size:12px;">과목별</button>' +
+        '</div>'
+      : '';
+    var boxPlotCard = '<div class="clay-raised" style="' + CARD_PAD + '"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;flex-wrap:wrap;">' +
+      '<div style="display:flex;align-items:center;gap:10px;color:#036242;">' + svg('#ic-box', 20) + '<span style="font-size:16px;font-weight:800;color:#0A3D2A;">' + boxTitle + ' (상자그림)</span></div>' +
+      boxToggle + '</div>' +
       '<div style="font-size:12px;color:#7FA895;margin-bottom:8px;">' + boxHint + '</div>' +
       '<div style="padding:14px;' + CHART + '">' + GK.boxPlotSVG(boxItems) + '</div></div>';
     var distSection = boxByClass
@@ -582,6 +592,7 @@
     else if (act === 'addTeacher') { doAddTeacher(); }
     else if (act === 'gGrade') { state.tGrade = +t.getAttribute('data-grade'); state.tClass = null; render(); }
     else if (act === 'tClass') { var cv = t.getAttribute('data-class'); state.tClass = cv === 'all' ? 'all' : +cv; render(); }
+    else if (act === 'boxView') { state.boxView = t.getAttribute('data-view'); render(); }
     else if (act === 'tSubject') { state.tSubject = t.getAttribute('data-sid'); render(); }
   }
   function onKeydown(e) {
