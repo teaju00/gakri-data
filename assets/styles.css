@@ -21,9 +21,15 @@
   --brand-accent: var(--green-600);
   --bg: #DDE8E2;          /* body background - slightly darker for card contrast */
   --surface-card: #F0F7F3; /* card surface - brighter than bg for float effect */
+  --surface-inset-2: #EAF4EF; /* 얕게 파인 배경(탭 바, 테이블 로우) */
   --text: #0B2F23;
   --text-soft: #3C5C4F;
   --text-muted: #7FA895;
+  --text-hint: #8AAE9E;   /* 가장 옅은 보조 문구(안내 문구, 캡션) */
+  --text-input: #0C4A34;  /* 입력창 안의 글자색 */
+  --heading: #0A3D2A;     /* 카드/섹션 제목 */
+  --danger: #B54B3A;      /* 유일한 에러 상태 색 */
+  --chip-bg-brand: #DCEEE5; /* 브랜드 톤 뱃지 배경 */
   --white: #FFFFFF;
 
   /* Auxiliary 4 colors */
@@ -95,7 +101,7 @@ a:focus-visible {
 /* 일반 오목 영역 (탭 바, 테이블 바깥 등 얕게 파인 배경) */
 .clay-inset {
   border-radius: 22px;
-  background: #EAF4EF;
+  background: var(--surface-inset-2);
   box-shadow:
     inset 4px 4px 12px rgba(3, 60, 42, 0.08),
     inset -4px -4px 12px rgba(255, 255, 255, 0.9);
@@ -104,7 +110,7 @@ a:focus-visible {
 /* 아이콘 박스 */
 .clay-icon {
   border-radius: 14px;
-  background: #E6F1EC;
+  background: var(--green-100);
   color: var(--brand);
   box-shadow:
     6px 8px 16px rgba(3, 60, 42, 0.1),
@@ -127,7 +133,7 @@ a:focus-visible {
   font-family: inherit;
   font-weight: 700;
   color: var(--text-soft);
-  background: #E6F1EC;
+  background: var(--green-100);
   cursor: pointer;
   box-shadow:
     4px 6px 12px rgba(3, 60, 42, 0.08),
@@ -167,7 +173,7 @@ a:focus-visible {
 
 /* 테이블 로우 */
 .clay-table-row {
-  background: #EAF4EF;
+  background: var(--surface-inset-2);
   border-radius: 18px;
   box-shadow:
     inset 3px 4px 8px rgba(3, 60, 42, 0.06),

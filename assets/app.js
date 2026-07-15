@@ -10,8 +10,8 @@
   var api = window.GKAPI;
   var caps = api.caps();
 
-  var gradeColors = ['', '#036242', '#0A7A54', '#3FA37E', '#A9D9C4', '#D6EFE4'];
-  var gradeText   = ['', '#FFFFFF', '#FFFFFF', '#FFFFFF', '#0B2F23', '#0B2F23'];
+  var gradeColors = ['', 'var(--green-800)', 'var(--green-700)', 'var(--green-500)', 'var(--green-300)', 'var(--green-200)'];
+  var gradeText   = ['', 'var(--white)', 'var(--white)', 'var(--white)', 'var(--text)', 'var(--text)'];
 
   var meta = null;
   var state = {
@@ -50,23 +50,23 @@
   // ================================================================ 학생 탭
   function studentInput() {
     var shake = state.codeErr ? 'clayshake 0.42s ease' : 'none';
-    var err = state.codeErr ? '<div id="codeErr" style="font-size:13px;color:#3C5C4F;font-weight:600;margin-top:-8px;">해당 코드의 학생을 찾을 수 없습니다.</div>' : '';
+    var err = state.codeErr ? '<div id="codeErr" style="font-size:13px;color:var(--text-soft);font-weight:600;margin-top:-8px;">해당 코드의 학생을 찾을 수 없습니다.</div>' : '';
     
     var chips = (meta.exampleCodes || []).map(function (c) {
-      return '<button data-act="example" data-code="' + esc(c) + '" class="clay-soft-btn" style="padding:9px 16px;font-size:14px;color:#036242;letter-spacing:0.08em;">' + esc(c) + '</button>';
+      return '<button data-act="example" data-code="' + esc(c) + '" class="clay-soft-btn" style="padding:9px 16px;font-size:14px;color:var(--brand);letter-spacing:0.08em;">' + esc(c) + '</button>';
     }).join('');
 
     return '<div style="display:flex;justify-content:center;padding:20px;">' +
       '<div class="clay-raised" style="width:100%;max-width:480px;display:flex;flex-direction:column;gap:22px;padding:40px;">' +
       '<div style="display:flex;align-items:center;gap:14px;"><div class="clay-icon" style="width:56px;height:56px;display:flex;align-items:center;justify-content:center;border-radius:18px;">' + svg('#ic-search', 28) + '</div>' +
-      '<div><div style="font-size:21px;font-weight:800;letter-spacing:-0.02em;color:#0A3D2A;">학생 코드 조회</div>' +
-      '<div style="font-size:13px;color:#4E7D68;margin-top:3px;">본인 코드를 입력하면 내 성적 변화가 표시됩니다.</div></div></div>' +
-      '<input id="code" class="clay-inset-field" value="' + esc(state.code) + '" placeholder="예: 3-K7Q" style="width:100%;border:none;padding:18px 22px;font-size:20px;font-family:inherit;color:#0C4A34;letter-spacing:0.14em;text-transform:uppercase;animation:' + shake + ';">' +
+      '<div><div style="font-size:21px;font-weight:800;letter-spacing:-0.02em;color:var(--heading);">학생 코드 조회</div>' +
+      '<div style="font-size:13px;color:var(--text-soft);margin-top:3px;">본인 코드를 입력하면 내 성적 변화가 표시됩니다.</div></div></div>' +
+      '<input id="code" class="clay-inset-field" value="' + esc(state.code) + '" placeholder="예: 3-K7Q" style="width:100%;border:none;padding:18px 22px;font-size:20px;font-family:inherit;color:var(--text-input);letter-spacing:0.14em;text-transform:uppercase;animation:' + shake + ';">' +
       err +
       '<button data-act="lookup" class="clay-brand-btn" style="padding:17px;font-size:16px;">' + svg('#ic-search', 20) + '조회하기</button>' +
-      '<div style="border-top:1px solid rgba(3,98,66,0.1);padding-top:18px;"><div style="font-size:12px;color:#7FA895;font-weight:600;margin-bottom:10px;">예시 코드 (눌러서 바로 조회)</div>' +
+      '<div style="border-top:1px solid rgba(3,98,66,0.1);padding-top:18px;"><div style="font-size:12px;color:var(--text-muted);font-weight:600;margin-bottom:10px;">예시 코드 (눌러서 바로 조회)</div>' +
       '<div style="display:flex;flex-wrap:wrap;gap:10px;">' + chips + '</div></div>' +
-      '<div style="display:flex;align-items:center;gap:8px;font-size:11.5px;color:#8AAE9E;line-height:1.5;">' + svg('#ic-shield', 16) + '<span>이름 · 석차 · 백분위 · 반/번호는 표시하지 않습니다.</span></div>' +
+      '<div style="display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--text-hint);line-height:1.5;">' + svg('#ic-shield', 16) + '<span>이름 · 석차 · 백분위 · 반/번호는 표시하지 않습니다.</span></div>' +
       '</div></div>';
   }
 
@@ -74,7 +74,7 @@
     if (reach['중간'] == null || reach['기말'] == null) return '';
     var d = Math.round((reach['기말'] - reach['중간']) * 10) / 10;
     var up = d >= 0;
-    var color = up ? '#12936A' : '#6FBE9E'; // 하강도 경고색(빨강) 아님 — 중립 그린
+    var color = up ? 'var(--green-600)' : 'var(--green-400)'; // 하강도 경고색(빨강) 아님 — 중립 그린
     var icon = up ? '#ic-up' : '#ic-down';
     var txt = (up ? '+' : '') + d + '%p';
     return '<span class="clay-badge" style="display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:800;color:#fff;background:' + color + ';border-radius:9px;padding:3px 8px;">' + svg(icon, 13) + txt + '</span>';
@@ -103,9 +103,9 @@
         if (nextCut != null) {
           var diff = Math.round((nextCut - myTotal) * 10) / 10;
           if (diff > 0) {
-            nextDiffHtml = '<div style="margin-top:4px;font-size:14px;color:#12936A;font-weight:700;">' + (grade - 1) + '등급 최소점까지 <span style="font-size:17px;color:#036242;">+' + diff.toFixed(1) + '점</span> 남았습니다.</div>';
+            nextDiffHtml = '<div style="margin-top:4px;font-size:14px;color:var(--green-600);font-weight:700;">' + (grade - 1) + '등급 최소점까지 <span style="font-size:17px;color:var(--brand);">+' + diff.toFixed(1) + '점</span> 남았습니다.</div>';
           } else {
-            nextDiffHtml = '<div style="margin-top:4px;font-size:14px;color:#12936A;font-weight:700;">다음 등급 최저점에 도달했습니다! (동점자 처리에 따라 변동 가능)</div>';
+            nextDiffHtml = '<div style="margin-top:4px;font-size:14px;color:var(--green-600);font-weight:700;">다음 등급 최저점에 도달했습니다! (동점자 처리에 따라 변동 가능)</div>';
           }
         }
       }
@@ -115,14 +115,14 @@
     var bar = '<div style="display:flex;gap:3px;width:100%;height:18px;border-radius:9px;overflow:hidden;">';
     for (var i = 1; i <= 5; i++) {
       bar += '<div style="flex:1;background:' + gradeColors[i] + ';position:relative;">';
-      if (i === grade) bar += '<div style="position:absolute;inset:-3px -2px;border:3px solid #0B2F23;border-radius:6px;"></div>';
+      if (i === grade) bar += '<div style="position:absolute;inset:-3px -2px;border:3px solid var(--text);border-radius:6px;"></div>';
       bar += '</div>';
     }
     bar += '</div>';
     return '<div class="grade-modal-overlay" data-act="closeModal">' +
       '<div class="grade-modal" data-act="none">' +
       '<div class="clay-icon" style="width:72px;height:72px;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:800;color:' + gradeText[grade] + ';background:' + gradeColors[grade] + ';">' + grade + '</div>' +
-      '<div style="font-size:22px;font-weight:800;color:#0B2F23;">' + g.name + '</div>' +
+      '<div style="font-size:22px;font-weight:800;color:var(--text);">' + g.name + '</div>' +
       nextDiffHtml +
       bar +
       '<button data-act="closeModal" class="clay-brand-btn" style="padding:12px 28px;font-size:14px;margin-top:4px;">' + svg('#ic-back', 16) + '닫기</button>' +
@@ -139,15 +139,15 @@
       var d = st.subjects[s.id]; if (!d) return '';
       var labels = order.filter(function (c) { return d.reach[c] != null; });
       var data = labels.map(function (c) { return d.reach[c]; });
-      var ring = sel === s.id ? '2.5px solid #036242' : '2.5px solid transparent';
+      var ring = sel === s.id ? '2.5px solid var(--brand)' : '2.5px solid transparent';
       var chips = order.filter(function (c) { return d.comps[c]; }).map(function (c) {
-        return '<div class="clay-badge" style="font-size:11.5px;color:#4E7D68;background:#E6F1EC;border-radius:9px;padding:4px 9px;"><span style="font-weight:700;">' + c + '</span> ' + d.comps[c].score + ' <span style="opacity:0.6;">·' + d.comps[c].weight + '%</span></div>';
+        return '<div class="clay-badge" style="font-size:11.5px;color:var(--text-soft);background:var(--green-100);border-radius:9px;padding:4px 9px;"><span style="font-weight:700;">' + c + '</span> ' + d.comps[c].score + ' <span style="opacity:0.6;">·' + d.comps[c].weight + '%</span></div>';
       }).join('');
       
       return '<div data-act="selectS" data-sid="' + s.id + '" class="clay-raised card-hover" style="cursor:pointer;padding:20px;display:flex;flex-direction:column;gap:12px;outline:' + ring + ';outline-offset:-2px;">' +
-        '<div style="display:flex;align-items:center;justify-content:space-between;"><div style="display:flex;align-items:center;gap:11px;"><div class="clay-icon" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;">' + svg(s.icon, 24) + '</div><span style="font-size:17px;font-weight:800;color:#0A3D2A;">' + s.name + '</span></div>' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;"><div style="display:flex;align-items:center;gap:11px;"><div class="clay-icon" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;">' + svg(s.icon, 24) + '</div><span style="font-size:17px;font-weight:800;color:var(--heading);">' + s.name + '</span></div>' +
         '<div data-act="gradeInfo" data-sid="' + s.id + '" data-grade="' + d.grade + '" class="clay-badge" style="cursor:pointer;width:42px;height:42px;flex:none;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:' + gradeText[d.grade] + ';background:' + gradeColors[d.grade] + ';">' + d.grade + '</div></div>' +
-        '<div style="display:flex;align-items:baseline;gap:6px;"><span style="font-size:30px;font-weight:800;color:#036242;line-height:1;">' + fmt(d.total) + '</span><span style="font-size:13px;color:#7FA895;font-weight:600;">점 / 100</span>' + (changeBadge(d.reach) ? '<span style="margin-left:auto;">' + changeBadge(d.reach) + '</span>' : '') + '</div>' +
+        '<div style="display:flex;align-items:baseline;gap:6px;"><span style="font-size:30px;font-weight:800;color:var(--brand);line-height:1;">' + fmt(d.total) + '</span><span style="font-size:13px;color:var(--text-muted);font-weight:600;">점 / 100</span>' + (changeBadge(d.reach) ? '<span style="margin-left:auto;">' + changeBadge(d.reach) + '</span>' : '') + '</div>' +
         '<div style="padding:6px 2px;">' + GK.miniProgress(labels, data) + '</div>' +
         '<div style="display:flex;flex-wrap:wrap;gap:6px;border-top:1px solid rgba(3,98,66,0.09);padding-top:10px;">' + chips + '</div></div>';
     }).join('');
@@ -157,26 +157,26 @@
       var d = st.subjects[s.id]; if (!d) return '';
       var compsStr = order.filter(function (c) { return d.comps[c]; }).map(function (c) { return c + ' ' + d.comps[c].weight + '%'; }).join(' · ');
       return '<div class="clay-table-row" style="display:grid;grid-template-columns:1.4fr 1fr 0.8fr 2.2fr;gap:12px;align-items:center;padding:11px 14px;">' +
-        '<span style="font-size:14.5px;font-weight:700;color:#0A3D2A;">' + s.name + '</span><span style="font-size:14px;font-weight:700;color:#036242;">' + fmt(d.total) + '</span>' +
+        '<span style="font-size:14.5px;font-weight:700;color:var(--heading);">' + s.name + '</span><span style="font-size:14px;font-weight:700;color:var(--brand);">' + fmt(d.total) + '</span>' +
         '<span><span data-act="gradeInfo" data-sid="' + s.id + '" data-grade="' + d.grade + '" class="clay-badge" style="cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:9px;font-size:14px;font-weight:800;color:' + gradeText[d.grade] + ';background:' + gradeColors[d.grade] + ';">' + d.grade + '</span></span>' +
-        '<span style="font-size:12.5px;color:#4E7D68;">' + compsStr + '</span></div>';
+        '<span style="font-size:12.5px;color:var(--text-soft);">' + compsStr + '</span></div>';
     }).join('');
 
     return '<div style="max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:22px;">' +
       // header
       '<div class="clay-raised" style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 22px;">' +
       '<div style="display:flex;align-items:center;gap:16px;"><button data-act="back" title="코드 조회로" class="clay-soft-btn" style="width:46px;height:46px;padding:0;display:flex;align-items:center;justify-content:center;">' + svg('#ic-back', 22) + '</button>' +
-      '<div><div style="display:flex;align-items:center;gap:10px;"><span style="font-size:12px;font-weight:700;letter-spacing:0.16em;color:#7FA895;">CODE</span><span style="font-size:24px;font-weight:800;letter-spacing:0.04em;color:#0A3D2A;">' + esc(st.code) + '</span><span style="font-size:14px;font-weight:700;color:#036242;background:#DCEEE5;border-radius:9px;padding:4px 11px;" class="clay-badge">' + st.grade + '학년</span></div>' +
-      '<div style="font-size:12px;color:#7FA895;margin-top:4px;">내 학습 점검 · 다른 학생과 비교하지 않습니다</div></div></div>' +
-      '<div style="text-align:right;"><div style="font-size:12px;color:#7FA895;font-weight:600;">평균 등급</div><div style="display:flex;align-items:baseline;gap:5px;justify-content:flex-end;"><span style="font-size:30px;font-weight:800;color:' + gradeColors[avgG] + ';">' + fmt(st.avg) + '</span><span style="font-size:13px;color:#7FA895;font-weight:600;">등급</span></div></div>' +
+      '<div><div style="display:flex;align-items:center;gap:10px;"><span style="font-size:12px;font-weight:700;letter-spacing:0.16em;color:var(--text-muted);">CODE</span><span style="font-size:24px;font-weight:800;letter-spacing:0.04em;color:var(--heading);">' + esc(st.code) + '</span><span style="font-size:14px;font-weight:700;color:var(--brand);background:var(--chip-bg-brand);border-radius:9px;padding:4px 11px;" class="clay-badge">' + st.grade + '학년</span></div>' +
+      '<div style="font-size:12px;color:var(--text-muted);margin-top:4px;">내 학습 점검 · 다른 학생과 비교하지 않습니다</div></div></div>' +
+      '<div style="text-align:right;"><div style="font-size:12px;color:var(--text-muted);font-weight:600;">평균 등급</div><div style="display:flex;align-items:baseline;gap:5px;justify-content:flex-end;"><span style="font-size:30px;font-weight:800;color:' + gradeColors[avgG] + ';">' + fmt(st.avg) + '</span><span style="font-size:13px;color:var(--text-muted);font-weight:600;">등급</span></div></div>' +
       '</div>' +
       // big progress
       progressCard() +
       // subject cards
       '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:18px;">' + cards + '</div>' +
       // table
-      '<div class="clay-raised" style="' + CARD_PAD + '"><div style="font-size:16px;font-weight:800;color:#0A3D2A;margin-bottom:14px;">과목별 등급표</div><div style="display:flex;flex-direction:column;gap:8px;">' +
-      '<div style="display:grid;grid-template-columns:1.4fr 1fr 0.8fr 2.2fr;gap:12px;padding:0 14px 8px;font-size:12px;font-weight:700;color:#7FA895;border-bottom:1px solid rgba(3,98,66,0.1);"><span>과목</span><span>총점</span><span>등급</span><span>반영 요소</span></div>' + rows + '</div></div>' +
+      '<div class="clay-raised" style="' + CARD_PAD + '"><div style="font-size:16px;font-weight:800;color:var(--heading);margin-bottom:14px;">과목별 등급표</div><div style="display:flex;flex-direction:column;gap:8px;">' +
+      '<div style="display:grid;grid-template-columns:1.4fr 1fr 0.8fr 2.2fr;gap:12px;padding:0 14px 8px;font-size:12px;font-weight:700;color:var(--text-muted);border-bottom:1px solid rgba(3,98,66,0.1);"><span>과목</span><span>총점</span><span>등급</span><span>반영 요소</span></div>' + rows + '</div></div>' +
       '</div>';
   }
 
@@ -188,29 +188,29 @@
 
     var body = multi
       ? '<div style="max-width:600px;margin:0 auto;padding:16px;">' + GK.slopeChart(order, slopeData) + '</div>'
-      : '<div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:34px;"><span style="font-size:46px;font-weight:800;color:#036242;">' + d.reach[order[0]] + '%</span><span style="font-size:13px;color:#7FA895;">이 과목은 ' + order[0] + '평가만 반영합니다</span></div>';
+      : '<div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:34px;"><span style="font-size:46px;font-weight:800;color:var(--brand);">' + d.reach[order[0]] + '%</span><span style="font-size:13px;color:var(--text-muted);">이 과목은 ' + order[0] + '평가만 반영합니다</span></div>';
     return '<div class="clay-raised" style="' + CARD_PAD + '">' +
-      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;color:#036242;">' + svg('#ic-trend', 22) + '<span style="font-size:17px;font-weight:800;color:#0A3D2A;">' + s.name + ' · 자기 대비 진전</span>' + (changeBadge(d.reach) ? '<span style="margin-left:6px;">' + changeBadge(d.reach) + '</span>' : '') + '</div>' +
-      '<div style="font-size:12px;color:#7FA895;margin-bottom:10px;">평가 시점별 도달률(내 점수 ÷ 만점). 과목 카드를 눌러 전환.</div>' + body + '</div>';
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;color:var(--brand);">' + svg('#ic-trend', 22) + '<span style="font-size:17px;font-weight:800;color:var(--heading);">' + s.name + ' · 자기 대비 진전</span>' + (changeBadge(d.reach) ? '<span style="margin-left:6px;">' + changeBadge(d.reach) + '</span>' : '') + '</div>' +
+      '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">평가 시점별 도달률(내 점수 ÷ 만점). 과목 카드를 눌러 전환.</div>' + body + '</div>';
   }
 
   // ================================================================ 교사 탭
   function entryGate() {
     var shake = state.pwErr ? 'clayshake 0.42s ease' : 'none';
-    var err = state.pwErr ? '<div id="pwErr" style="font-size:13px;color:#3C5C4F;font-weight:600;margin-top:-12px;">' + esc(state.pwErr) + '</div>' : '';
+    var err = state.pwErr ? '<div id="pwErr" style="font-size:13px;color:var(--text-soft);font-weight:600;margin-top:-12px;">' + esc(state.pwErr) + '</div>' : '';
 
     var subtitle = caps.accounts
       ? '교내 열람용 도구입니다.<br>배정된 교사 계정으로 로그인해 주세요.'
       : '교내 열람용 도구입니다.<br>비밀번호를 입력해 주세요.';
     var hint = api.demoPassword
-      ? '<div style="font-size:12px;color:#8AAE9E;">데모 비밀번호: ' + esc(api.demoPassword) + '</div>'
-      : '<div style="font-size:12px;color:#8AAE9E;">담임은 자기 반, 교과교사는 담당 반·과목만 조회됩니다.</div>';
+      ? '<div style="font-size:12px;color:var(--text-hint);">데모 비밀번호: ' + esc(api.demoPassword) + '</div>'
+      : '<div style="font-size:12px;color:var(--text-hint);">담임은 자기 반, 교과교사는 담당 반·과목만 조회됩니다.</div>';
 
     return '<div style="display:flex;justify-content:center;padding:40px 20px;">' +
       '<div class="clay-raised" style="width:100%;max-width:420px;display:flex;flex-direction:column;align-items:center;gap:24px;padding:48px 40px;">' +
       '<div class="clay-icon" style="width:88px;height:88px;display:flex;align-items:center;justify-content:center;border-radius:26px;">' + svg('#ic-lock', 40) + '</div>' +
-      '<div style="text-align:center;"><div style="font-size:23px;font-weight:800;color:#0A3D2A;">성적 분석 · 접속 인증</div><div style="margin-top:8px;font-size:14px;color:#4E7D68;line-height:1.5;">' + subtitle + '</div></div>' +
-      '<input id="pw" type="password" class="clay-inset-field" value="' + esc(state.pw) + '" placeholder="비밀번호" style="width:100%;border:none;padding:16px 20px;font-size:17px;font-family:inherit;color:#0C4A34;text-align:center;letter-spacing:0.15em;animation:' + shake + ';">' +
+      '<div style="text-align:center;"><div style="font-size:23px;font-weight:800;color:var(--heading);">성적 분석 · 접속 인증</div><div style="margin-top:8px;font-size:14px;color:var(--text-soft);line-height:1.5;">' + subtitle + '</div></div>' +
+      '<input id="pw" type="password" class="clay-inset-field" value="' + esc(state.pw) + '" placeholder="비밀번호" style="width:100%;border:none;padding:16px 20px;font-size:17px;font-family:inherit;color:var(--text-input);text-align:center;letter-spacing:0.15em;animation:' + shake + ';">' +
       err +
       '<button data-act="enter" class="clay-brand-btn" style="width:100%;padding:16px;font-size:16px;">입장</button>' +
       hint +
@@ -260,7 +260,7 @@
 
   function teacherDash() {
     if (!normalizeSelection()) {
-      return '<div style="max-width:1080px;margin:0 auto;"><div class="clay-raised" style="' + CARD_PAD + 'text-align:center;color:#4E7D68;">조회 가능한 데이터가 없습니다. 관리자에게 담당 반·과목 배정을 요청하세요.</div></div>';
+      return '<div style="max-width:1080px;margin:0 auto;"><div class="clay-raised" style="' + CARD_PAD + 'text-align:center;color:var(--text-soft);">조회 가능한 데이터가 없습니다. 관리자에게 담당 반·과목 배정을 요청하세요.</div></div>';
     }
 
     var g = state.tGrade, sid = state.tSubject;
@@ -289,7 +289,7 @@
       var btnCls = (s.id === sid) ? 'clay-tab-active' : 'clay-soft-btn';
       return '<button data-act="tSubject" data-sid="' + s.id + '" class="' + btnCls + '" style="padding:8px 14px;font-size:13px;display:flex;align-items:center;gap:6px;">' + svg(s.icon, 16) + s.name + '</button>';
     }).join('');
-    var statTile = function (label, val) { return '<div class="clay-inset" style="flex:1;text-align:center;padding:14px 10px;border-radius:16px;"><div style="font-size:22px;font-weight:800;color:#036242;">' + val + '</div><div style="font-size:11.5px;color:#4E7D68;font-weight:600;margin-top:2px;">' + label + '</div></div>'; };
+    var statTile = function (label, val) { return '<div class="clay-inset" style="flex:1;text-align:center;padding:14px 10px;border-radius:16px;"><div style="font-size:22px;font-weight:800;color:var(--brand);">' + val + '</div><div style="font-size:11.5px;color:var(--text-soft);font-weight:600;margin-top:2px;">' + label + '</div></div>'; };
     var groupLabel = classScoped() ? (g + '학년 ' + (state.tClass === 'all' ? '전체' : state.tClass + '반')) : (g + '학년');
 
     // 상자그림: 반 단위 데이터가 있으면(Tauri) 상단 반 선택기와 비교 축을 하나로 묶는다 —
@@ -314,10 +314,10 @@
     // 카드 두 개(5등급 분포·상자그림)는 반별/과목별 모드 둘 다 그대로 쓰고, 감싸는 레이아웃만 다르다
     // (반별은 박스가 많을 수 있어 전체 폭, 과목별은 기존 2열). 레이아웃은 "상단에 반 선택기가
     // 여러 개 있는가"로만 갈라 — 전체/특정반 전환에 따라 흔들리지 않고 고정된다.
-    var gradeDistCard = '<div class="clay-raised" style="' + CARD_PAD + '"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;color:#036242;">' + svg('#ic-radar', 20) + '<span style="font-size:16px;font-weight:800;color:#0A3D2A;">5등급 분포</span></div>' +
+    var gradeDistCard = '<div class="clay-raised" style="' + CARD_PAD + '"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;color:var(--brand);">' + svg('#ic-radar', 20) + '<span style="font-size:16px;font-weight:800;color:var(--heading);">5등급 분포</span></div>' +
       '<div style="position:relative;height:230px;padding:16px;' + CHART + '"><canvas id="gradeCanvas"></canvas></div></div>';
-    var boxPlotCard = '<div class="clay-raised" style="' + CARD_PAD + '"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;color:#036242;">' + svg('#ic-box', 20) + '<span style="font-size:16px;font-weight:800;color:#0A3D2A;">' + boxTitle + ' (상자그림)</span></div>' +
-      '<div style="font-size:12px;color:#7FA895;margin-bottom:8px;">' + boxHint + '</div>' +
+    var boxPlotCard = '<div class="clay-raised" style="' + CARD_PAD + '"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;color:var(--brand);">' + svg('#ic-box', 20) + '<span style="font-size:16px;font-weight:800;color:var(--heading);">' + boxTitle + ' (상자그림)</span></div>' +
+      '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">' + boxHint + '</div>' +
       '<div style="padding:14px;' + CHART + '">' + GK.boxPlotSVG(boxItems) + '</div></div>';
     var distSection = (classScoped() && classes.length > 1)
       ? gradeDistCard + boxPlotCard
@@ -327,7 +327,7 @@
       // banner + controls
       '<div class="clay-raised" style="' + CARD_PAD + 'display:flex;flex-direction:column;gap:16px;">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">' +
-      '<div style="display:flex;align-items:center;gap:10px;color:#036242;">' + svg('#ic-shield', 20) + '<span style="font-size:14px;font-weight:700;color:#0A3D2A;">' + scopeBanner() + '</span></div>' +
+      '<div style="display:flex;align-items:center;gap:10px;color:var(--brand);">' + svg('#ic-shield', 20) + '<span style="font-size:14px;font-weight:700;color:var(--heading);">' + scopeBanner() + '</span></div>' +
       '<button data-act="lock" class="clay-soft-btn" style="padding:10px 15px;display:flex;align-items:center;gap:6px;font-size:13.5px;">' + svg('#ic-logout', 18) + '잠금</button></div>' +
       '<div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;">' +
       '<div style="display:flex;gap:8px;">' + gradeBtns + '</div>' +
@@ -337,8 +337,8 @@
       '<div style="display:flex;gap:12px;">' + statTile('학생 수', node.count + '명') + statTile('평균', fmt(stats.mean)) + statTile('표준편차', fmt(stats.sd)) + statTile('중앙값', fmt(stats.median)) + '</div>' +
       '</div>' +
       // histogram
-      '<div class="clay-raised" style="' + CARD_PAD + '"><div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;color:#036242;">' + svg('#ic-bars', 22) + '<span style="font-size:17px;font-weight:800;color:#0A3D2A;">' + esc(gsub.name) + ' ' + groupLabel + ' 점수 분포</span></div>' +
-      '<div style="font-size:12px;color:#7FA895;margin-bottom:8px;">봉우리가 둘로 갈리면(이봉) 전체수업보다 두 트랙 차별화를 고려.</div>' +
+      '<div class="clay-raised" style="' + CARD_PAD + '"><div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;color:var(--brand);">' + svg('#ic-bars', 22) + '<span style="font-size:17px;font-weight:800;color:var(--heading);">' + esc(gsub.name) + ' ' + groupLabel + ' 점수 분포</span></div>' +
+      '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">봉우리가 둘로 갈리면(이봉) 전체수업보다 두 트랙 차별화를 고려.</div>' +
       '<div style="position:relative;height:250px;padding:16px;' + CHART + '"><canvas id="histCanvas"></canvas></div></div>' +
       // grade dist + box — 반별 비교는 박스 개수가 많을 수 있어 전체 폭으로, 과목별 비교(웹 모드)는 기존 2열 유지.
       distSection +
@@ -352,18 +352,18 @@
     return '<div style="display:flex;justify-content:center;padding:40px 20px;">' +
       '<div class="clay-raised" style="width:100%;max-width:480px;display:flex;flex-direction:column;gap:20px;padding:40px;">' +
       '<div style="display:flex;align-items:center;gap:14px;"><div class="clay-icon" style="width:56px;height:56px;display:flex;align-items:center;justify-content:center;border-radius:18px;">' + svg(icon, 28) + '</div>' +
-      '<div><div style="font-size:21px;font-weight:800;color:#0A3D2A;">' + title + '</div>' +
-      '<div style="font-size:13px;color:#4E7D68;margin-top:3px;line-height:1.5;">' + subtitle + '</div></div></div>' +
+      '<div><div style="font-size:21px;font-weight:800;color:var(--heading);">' + title + '</div>' +
+      '<div style="font-size:13px;color:var(--text-soft);margin-top:3px;line-height:1.5;">' + subtitle + '</div></div></div>' +
       body + '</div></div>';
   }
 
   function field(id, placeholder, type) {
-    return '<input id="' + id + '" ' + (type ? 'type="' + type + '" ' : '') + 'class="clay-inset-field" placeholder="' + placeholder + '" style="width:100%;border:none;padding:15px 18px;font-size:15px;font-family:inherit;color:#0C4A34;">';
+    return '<input id="' + id + '" ' + (type ? 'type="' + type + '" ' : '') + 'class="clay-inset-field" placeholder="' + placeholder + '" style="width:100%;border:none;padding:15px 18px;font-size:15px;font-family:inherit;color:var(--text-input);">';
   }
 
   function adminMsg() {
     if (!state.adminMsg) return '';
-    return '<div style="font-size:13px;color:#3C5C4F;font-weight:600;">' + esc(state.adminMsg) + '</div>';
+    return '<div style="font-size:13px;color:var(--text-soft);font-weight:600;">' + esc(state.adminMsg) + '</div>';
   }
 
   /// 최초 실행. 관리자 계정을 만들면서 vault 를 여는 키가 생성된다.
@@ -375,7 +375,7 @@
       field('suPw2', '비밀번호 확인', 'password') +
       adminMsg() +
       '<button data-act="provision" class="clay-brand-btn" style="padding:16px;font-size:16px;">계정 만들기</button>' +
-      '<div style="display:flex;align-items:flex-start;gap:8px;font-size:11.5px;color:#8AAE9E;line-height:1.6;">' + svg('#ic-lock', 16) +
+      '<div style="display:flex;align-items:flex-start;gap:8px;font-size:11.5px;color:var(--text-hint);line-height:1.6;">' + svg('#ic-lock', 16) +
       '<span>이 비밀번호로 성적 데이터가 암호화됩니다. <b>모든 계정의 비밀번호를 잃으면 복구할 수 없습니다.</b></span></div>'
     ) + '</main>';
   }
@@ -406,13 +406,13 @@
     if (!state.entered) {
       // 웹 모드는 메타가 도착한 뒤에 게이트를 그린다. 먼저 그리면 메타 도착 시 다시 그려지면서
       // 입력 중이던 비밀번호가 지워진다. (Tauri 는 로그인 전에 메타를 못 읽으므로 해당 없음.)
-      if (!meta && !caps.accounts) { root.innerHTML = '<div role="status" aria-live="polite" style="padding:60px;text-align:center;color:#4E7D68;">데이터 로딩 중…</div>'; return; }
+      if (!meta && !caps.accounts) { root.innerHTML = '<div role="status" aria-live="polite" style="padding:60px;text-align:center;color:var(--text-soft);">데이터 로딩 중…</div>'; return; }
       root.innerHTML = '<main style="min-height:100vh;min-height:100dvh;padding:26px 20px 64px;">' + entryGate() + '</main>';
       return;
     }
     if (!meta) {
       if (state.needsImport) { root.innerHTML = importScreen(); return; }
-      root.innerHTML = '<div role="status" aria-live="polite" style="padding:60px;text-align:center;color:#4E7D68;">데이터 로딩 중…</div>';
+      root.innerHTML = '<div role="status" aria-live="polite" style="padding:60px;text-align:center;color:var(--text-soft);">데이터 로딩 중…</div>';
       return;
     }
     var body;
@@ -423,7 +423,7 @@
   }
 
   function teacherBody() {
-    if (!state.cohort) { ensureCohort(); return '<div style="max-width:1080px;margin:0 auto;"><div class="clay-raised" style="' + CARD_PAD + 'text-align:center;color:#4E7D68;">진단 데이터 로딩 중…</div></div>'; }
+    if (!state.cohort) { ensureCohort(); return '<div style="max-width:1080px;margin:0 auto;"><div class="clay-raised" style="' + CARD_PAD + 'text-align:center;color:var(--text-soft);">진단 데이터 로딩 중…</div></div>'; }
     return teacherDash();
   }
 
@@ -571,7 +571,7 @@
     // 웹: 예전 그대로. 메타는 정적 파일이라 바로 읽는다.
     render();
     loadMeta().catch(function () {
-      root.innerHTML = '<div role="alert" style="padding:60px;text-align:center;color:#B54B3A;">메타 로드 실패 — 빌드 필요: <code>npm run gen-sample &amp;&amp; npm run build</code></div>';
+      root.innerHTML = '<div role="alert" style="padding:60px;text-align:center;color:var(--danger);">메타 로드 실패 — 빌드 필요: <code>npm run gen-sample &amp;&amp; npm run build</code></div>';
     });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
