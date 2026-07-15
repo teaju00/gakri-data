@@ -494,7 +494,7 @@
   // Rust 커맨드는 안정적인 코드 문자열로 거절한다 (error.rs 참고).
   function errText(e) {
     var s = (e && e.message) ? e.message : String(e);
-    if (s.indexOf('BAD_CREDENTIALS') >= 0) return '아이디 또는 비밀번호가 올바르지 않습니다.';
+    if (s.indexOf('BAD_CREDENTIALS') >= 0) return '비밀번호가 올바르지 않습니다.';
     if (s.indexOf('FORBIDDEN') >= 0) return '권한이 없습니다.';
     if (s.indexOf('ALREADY_PROVISIONED') >= 0) return '이미 설정이 끝난 상태입니다.';
     if (s.indexOf('NOT_PROVISIONED') >= 0) return '아직 데이터가 없습니다.';
@@ -594,13 +594,13 @@
   function onKeydown(e) {
     if (e.key !== 'Enter') return;
     if (e.target.id === 'code') lookup(e.target.value);
-    else if (e.target.id === 'pw' || e.target.id === 'user') doEnter();
+    else if (e.target.id === 'pw') doEnter();
     else if (e.target.id === 'suPw2') doProvision();
     else if (e.target.id === 'impDir') doImport();
   }
   function onInput(e) {
     if (e.target.id === 'code' && state.codeErr) { state.codeErr = false; strip('codeErr', 'code'); }
-    if ((e.target.id === 'pw' || e.target.id === 'user') && state.pwErr) { state.pwErr = ''; strip('pwErr', 'pw'); }
+    if (e.target.id === 'pw' && state.pwErr) { state.pwErr = ''; strip('pwErr', 'pw'); }
   }
   function strip(errId, inputId) { var er = document.getElementById(errId); if (er) er.remove(); var inp = document.getElementById(inputId); if (inp) inp.style.animation = 'none'; }
 
