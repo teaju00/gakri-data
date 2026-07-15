@@ -103,8 +103,6 @@
     // 앱 최초 실행 / 관리자 전용 — 웹 모드에는 대응물이 없다.
     isProvisioned: function () { return invoke('is_provisioned'); },
     provision: function (username, password) { return invoke('provision', { username: username, password: password }); },
-    addTeacher: function (teacher) { return invoke('add_teacher', { token: tauriSession.token, teacher: teacher }); },
-    listTeachers: function () { return invoke('list_teachers', { token: tauriSession.token }); },
     importGrades: function (dir) { return invoke('import_grades', { token: tauriSession.token, dir: dir }); },
     demoPassword: null
   };

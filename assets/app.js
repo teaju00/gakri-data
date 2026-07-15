@@ -342,8 +342,7 @@
       '<div style="position:relative;height:250px;padding:16px;' + CHART + '"><canvas id="histCanvas"></canvas></div></div>' +
       // grade dist + box — 반별 비교는 박스 개수가 많을 수 있어 전체 폭으로, 과목별 비교(웹 모드)는 기존 2열 유지.
       distSection +
-      '</div>' +
-      adminPanel();
+      '</div>';
   }
 
   // ================================================================ 관리자 화면 (Tauri 전용)
@@ -395,39 +394,6 @@
       '<button data-act="import" class="clay-brand-btn" style="padding:16px;font-size:16px;">불러오기</button>' +
       '<button data-act="lock" class="clay-soft-btn" style="padding:12px;font-size:14px;">로그아웃</button>'
     ) + '</main>';
-  }
-
-  /// 교사 계정 추가. 관리자 세션의 키를 새 교사 비밀번호로 다시 감싼다(Rust 쪽).
-  function adminPanel() {
-    if (!caps.accounts || !state.session || state.session.role !== 'admin') return '';
-    return '<div class="clay-raised" style="max-width:1080px;margin:22px auto 0;' + CARD_PAD + 'display:flex;flex-direction:column;gap:14px;">' +
-      '<div style="display:flex;align-items:center;gap:10px;color:#036242;">' + svg('#ic-teacher', 20) +
-      '<span style="font-size:16px;font-weight:800;color:#0A3D2A;">교사 계정 추가</span></div>' +
-      '<div style="font-size:12px;color:#7FA895;line-height:1.6;">담임은 <code>담임 3-2</code> 처럼, 교과교사는 <code>교과 3-2-mat, 3-1-mat</code> 처럼 적습니다. 과목 코드는 <code>' + meta.subjects.slice(0, 4).map(function (s) { return s.id; }).join(', ') + ', …</code>.</div>' +
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
-      field('atUser', '아이디') + field('atName', '표시 이름') +
-      field('atPw', '비밀번호 (8자 이상)', 'password') + field('atRole', '담임 3-2  /  교과 3-2-mat') +
-      '</div>' + adminMsg() +
-      '<button data-act="addTeacher" class="clay-brand-btn" style="padding:14px;font-size:15px;align-self:flex-start;padding-left:28px;padding-right:28px;">추가</button>' +
-      '</div>';
-  }
-
-  /// "담임 3-2" / "교과 3-2-mat, 3-1-mat" → Rust Role enum 모양.
-  function parseRole(text) {
-    var t = String(text || '').trim();
-    var m = /^담임\s+(\d+)\s*-\s*(\d+)$/.exec(t);
-    if (m) return { type: 'homeroom', grade: +m[1], class: +m[2] };
-
-    m = /^교과\s+(.+)$/.exec(t);
-    if (m) {
-      var assignments = m[1].split(',').map(function (part) {
-        var p = /^\s*(\d+)\s*-\s*(\d+)\s*-\s*([a-z]+)\s*$/.exec(part);
-        if (!p) return null;
-        return { grade: +p[1], class: +p[2], subject: p[3] };
-      });
-      if (assignments.every(Boolean) && assignments.length) return { type: 'subject', assignments: assignments };
-    }
-    return null;
   }
 
   // ================================================================ 렌더 + 차트 마운트
@@ -542,14 +508,6 @@
       .catch(function (e) { state.adminMsg = errText(e); render(); });
   }
 
-  function doAddTeacher() {
-    var role = parseRole(val('atRole'));
-    if (!role) { state.adminMsg = '역할 형식이 올바르지 않습니다. 예: 담임 3-2 / 교과 3-2-mat'; render(); return; }
-    api.addTeacher({ username: val('atUser'), displayName: val('atName'), password: val('atPw'), role: role })
-      .then(function () { state.adminMsg = '교사 계정을 추가했습니다.'; render(); })
-      .catch(function (e) { state.adminMsg = errText(e); render(); });
-  }
-
   // 교사 탭 첫 진입 시 코호트 데이터 지연 로드.
   // Tauri 모드에서는 이 응답이 이미 역할대로 필터링되어 있다 (Rust 가 거름).
   function ensureCohort() {
@@ -577,7 +535,6 @@
     else if (act === 'lock') { doLock(); }
     else if (act === 'provision') { doProvision(); }
     else if (act === 'import') { doImport(); }
-    else if (act === 'addTeacher') { doAddTeacher(); }
     else if (act === 'gGrade') { state.tGrade = +t.getAttribute('data-grade'); state.tClass = null; render(); }
     else if (act === 'tClass') { var cv = t.getAttribute('data-class'); state.tClass = cv === 'all' ? 'all' : +cv; render(); }
     else if (act === 'tSubject') { state.tSubject = t.getAttribute('data-sid'); render(); }
