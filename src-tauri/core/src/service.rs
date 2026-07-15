@@ -32,6 +32,16 @@ pub fn check_username(u: &str) -> Result<String> {
     Ok(u.to_string())
 }
 
+fn check_password_unique(password: &str, existing: &[TeacherRecord]) -> Result<()> {
+    let collides = existing
+        .iter()
+        .any(|t| crypto::unwrap_dek(password, &t.kdf, &t.wrapped_dek).is_ok());
+    if collides {
+        return Err(AppError::InvalidInput("이미 사용 중인 비밀번호입니다. 다른 비밀번호를 쓰세요.".into()));
+    }
+    Ok(())
+}
+
 pub fn is_provisioned(p: &Paths) -> bool {
     store::is_provisioned(p)
 }
@@ -43,6 +53,7 @@ pub fn provision(p: &Paths, username: &str, password: &str) -> Result<()> {
         return Err(AppError::AlreadyProvisioned);
     }
     check_password(password)?;
+    check_password_unique(password, &[])?;
     let username = check_username(username)?;
 
     let dek = crypto::new_dek();
@@ -133,6 +144,7 @@ pub fn add_teacher(p: &Paths, sessions: &SessionStore, token: &str, t: &NewTeach
         if file.teachers.iter().any(|x| x.username == username) {
             return Err(AppError::InvalidInput("이미 있는 아이디입니다".into()));
         }
+        check_password_unique(&t.password, &file.teachers)?;
         let kdf = crypto::new_kdf_params();
         let wrapped_dek = crypto::wrap_dek(&t.password, &kdf, &s.dek)?;
         file.teachers.push(TeacherRecord {

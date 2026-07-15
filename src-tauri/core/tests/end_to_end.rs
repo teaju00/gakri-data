@@ -294,3 +294,42 @@ fn every_teacher_unwraps_the_same_vault() {
     let v = service::cohort(&p, &sessions, &park.token).unwrap();
     assert_eq!(v.classes["2"].keys().collect::<Vec<_>>(), vec!["3"]);
 }
+
+#[test]
+fn add_teacher_rejects_password_already_used_by_another_account() {
+    let root = TempRoot::new("dup-pw");
+    let p = root.paths();
+    let sessions = SessionStore::default();
+
+    service::provision(&p, "admin", ADMIN_PW).unwrap();
+    let admin = service::login(&p, &sessions, ADMIN_PW).unwrap();
+
+    // 관리자와 같은 비밀번호로 새 교사를 만들려 하면 거부.
+    let err = service::add_teacher(
+        &p,
+        &sessions,
+        &admin.token,
+        &new_teacher("kim", ADMIN_PW, Role::Homeroom { grade: 1, class: 1 }),
+    )
+    .unwrap_err();
+    assert!(matches!(err, AppError::InvalidInput(_)));
+
+    // 서로 다른 비밀번호는 통과.
+    service::add_teacher(
+        &p,
+        &sessions,
+        &admin.token,
+        &new_teacher("kim", HOMEROOM_PW, Role::Homeroom { grade: 1, class: 1 }),
+    )
+    .unwrap();
+
+    // 이미 kim이 쓰는 비밀번호로 두 번째 교사를 만들려 하면 거부.
+    let err = service::add_teacher(
+        &p,
+        &sessions,
+        &admin.token,
+        &new_teacher("lee", HOMEROOM_PW, Role::Homeroom { grade: 2, class: 1 }),
+    )
+    .unwrap_err();
+    assert!(matches!(err, AppError::InvalidInput(_)));
+}
