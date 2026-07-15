@@ -32,10 +32,6 @@
   --chip-bg-brand: #DCEEE5; /* 브랜드 톤 뱃지 배경 */
   --white: #FFFFFF;
 
-  /* Auxiliary 4 colors */
-  --teal: #4DB8A4;
-  --gold: #F2C94C;
-  --slate: #6B8A9E;
   --cream: #FBF7EF;
 
   /* Clay shadows (green-tinted, no pure black) */
@@ -48,6 +44,9 @@
   --radius-sub: 18px;
   --radius-btn: 20px;
   --radius-badge: 999px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
   --font-sans: 'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
 }
@@ -139,7 +138,7 @@ a:focus-visible {
     4px 6px 12px rgba(3, 60, 42, 0.08),
     inset 2px 3px 6px rgba(255, 255, 255, 0.8),
     inset -2px -3px 6px rgba(3, 60, 42, 0.04);
-  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s var(--ease-out), filter 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out);
 }
 .clay-soft-btn:hover {
   transform: translateY(-2px);
@@ -197,7 +196,7 @@ a:focus-visible {
     6px 8px 16px rgba(3, 60, 42, 0.25),
     inset 3px 4px 8px rgba(255, 255, 255, 0.3),
     inset -3px -4px 10px rgba(1, 50, 33, 0.5);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.12s ease;
+  transition: transform 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out), filter 0.12s var(--ease-out);
 }
 .clay-brand-btn:hover {
   transform: translateY(-2px);
@@ -218,21 +217,21 @@ a:focus-visible {
 
 /* ---- Improved existing button/card classes ---- */
 
-.btn-primary { transition: filter .12s ease, box-shadow .12s ease, transform .12s ease; }
+.btn-primary { transition: filter .12s var(--ease-out), box-shadow .12s var(--ease-out), transform .12s var(--ease-out); }
 .btn-primary:hover { filter: brightness(1.07); transform: translateY(-2px); }
 .btn-primary:active {
   transform: translateY(1px) scale(0.98);
   box-shadow: inset 4px 4px 10px rgba(1,50,33,0.55), inset -3px -3px 8px rgba(90,180,140,0.35) !important;
 }
 
-.btn-soft { transition: color .12s ease, filter .12s ease, box-shadow .12s ease, transform .12s ease; }
+.btn-soft { transition: color .12s var(--ease-out), filter .12s var(--ease-out), box-shadow .12s var(--ease-out), transform .12s var(--ease-out); }
 .btn-soft:hover { color: var(--green-700); filter: brightness(1.03); transform: translateY(-1px); }
 .btn-soft:active {
   transform: translateY(0);
   box-shadow: inset 3px 3px 7px rgba(3,98,66,0.16), inset -3px -3px 7px rgba(255,255,255,0.9) !important;
 }
 
-.card-hover { transition: filter .12s ease, transform .12s ease; }
+.card-hover { transition: filter .12s var(--ease-out), transform .12s var(--ease-out); }
 .card-hover:hover { filter: brightness(1.025); transform: translateY(-3px); }
 
 /* ---- Input focus — clay focus ring ---- */
@@ -242,7 +241,6 @@ input:focus {
     inset 7px 7px 15px rgba(3,60,42,0.18),
     inset -7px -7px 15px rgba(255,255,255,0.95),
     0 0 0 3px rgba(3,98,66,0.25) !important;
-  transition: box-shadow 0.15s ease;
 }
 
 /* ---- Animations ---- */
@@ -274,7 +272,7 @@ input:focus {
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  animation: fadeIn 0.2s ease;
+  animation: fadeIn 0.2s var(--ease-out);
 }
 .grade-modal {
   background: var(--cream);
@@ -286,7 +284,7 @@ input:focus {
     14px 20px 40px rgba(3, 60, 42, 0.2),
     inset 4px 6px 16px rgba(255, 255, 255, 0.9),
     inset -4px -8px 16px rgba(3, 60, 42, 0.08);
-  animation: fadeUp 0.25s ease;
+  animation: fadeUp 0.25s var(--ease-out);
   display: flex;
   flex-direction: column;
   align-items: center;
