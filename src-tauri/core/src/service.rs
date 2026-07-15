@@ -63,19 +63,16 @@ pub fn provision(p: &Paths, username: &str, password: &str) -> Result<()> {
     )
 }
 
-pub fn login(p: &Paths, sessions: &SessionStore, username: &str, password: &str) -> Result<SessionDto> {
+pub fn login(p: &Paths, sessions: &SessionStore, password: &str) -> Result<SessionDto> {
     let file = store::read_teachers(p)?;
     if file.teachers.is_empty() {
         return Err(AppError::NotProvisioned);
     }
-    let rec = file
+    let (rec, dek) = file
         .teachers
         .iter()
-        .find(|t| t.username == username.trim())
+        .find_map(|t| crypto::unwrap_dek(password, &t.kdf, &t.wrapped_dek).ok().map(|d| (t, d)))
         .ok_or(AppError::BadCredentials)?;
-
-    // 비밀번호가 맞아야만 DEK 가 풀린다. 별도의 비밀번호 해시 비교가 없다.
-    let dek = crypto::unwrap_dek(password, &rec.kdf, &rec.wrapped_dek)?;
 
     let vault = store::read_vault(p, &dek)?;
     let scope = access::scope_for(&rec.role, &vault);

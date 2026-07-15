@@ -89,16 +89,13 @@ fn provision_then_login_then_wrong_password() {
         Err(AppError::AlreadyProvisioned)
     ));
 
+    // 아이디 없이 비밀번호만으로 로그인. 틀린 비밀번호는 어떤 계정과도 안 맞는다.
     assert!(matches!(
-        service::login(&p, &sessions, "admin", "wrongpassword"),
-        Err(AppError::BadCredentials)
-    ));
-    assert!(matches!(
-        service::login(&p, &sessions, "nobody", ADMIN_PW),
+        service::login(&p, &sessions, "wrongpassword"),
         Err(AppError::BadCredentials)
     ));
 
-    let s = service::login(&p, &sessions, "admin", ADMIN_PW).unwrap();
+    let s = service::login(&p, &sessions, ADMIN_PW).unwrap();
     assert_eq!(s.role, "admin");
     assert!(!s.token.is_empty());
 }
@@ -117,7 +114,7 @@ fn import_then_each_role_sees_only_its_own_data() {
     let cfg = config();
 
     service::provision(&p, "admin", ADMIN_PW).unwrap();
-    let admin = service::login(&p, &sessions, "admin", ADMIN_PW).unwrap();
+    let admin = service::login(&p, &sessions, ADMIN_PW).unwrap();
 
     // 임포트 전에는 메타가 없다.
     assert!(matches!(service::meta(&p), Err(AppError::NotProvisioned)));
@@ -149,7 +146,7 @@ fn import_then_each_role_sees_only_its_own_data() {
     )
     .unwrap();
 
-    let kim = service::login(&p, &sessions, "kim", HOMEROOM_PW).unwrap();
+    let kim = service::login(&p, &sessions, HOMEROOM_PW).unwrap();
     assert_eq!(kim.role, "homeroom");
     let v = service::cohort(&p, &sessions, &kim.token).unwrap();
 
@@ -191,7 +188,7 @@ fn import_then_each_role_sees_only_its_own_data() {
     )
     .unwrap();
 
-    let lee = service::login(&p, &sessions, "lee", SUBJECT_PW).unwrap();
+    let lee = service::login(&p, &sessions, SUBJECT_PW).unwrap();
     assert_eq!(lee.role, "subject");
     let v = service::cohort(&p, &sessions, &lee.token).unwrap();
 
@@ -235,7 +232,7 @@ fn code_map_never_touches_the_disk_in_plaintext() {
     let sessions = SessionStore::default();
 
     service::provision(&p, "admin", ADMIN_PW).unwrap();
-    let admin = service::login(&p, &sessions, "admin", ADMIN_PW).unwrap();
+    let admin = service::login(&p, &sessions, ADMIN_PW).unwrap();
     service::import_grades(&p, &sessions, &admin.token, &config(), &data).unwrap();
 
     // vault 는 JSON 으로 읽히면 안 된다.
@@ -277,7 +274,7 @@ fn every_teacher_unwraps_the_same_vault() {
     let sessions = SessionStore::default();
 
     service::provision(&p, "admin", ADMIN_PW).unwrap();
-    let admin = service::login(&p, &sessions, "admin", ADMIN_PW).unwrap();
+    let admin = service::login(&p, &sessions, ADMIN_PW).unwrap();
     service::import_grades(&p, &sessions, &admin.token, &config(), &data).unwrap();
 
     let vault_before = fs::read(root.0.join("vault.enc")).unwrap();
@@ -293,7 +290,7 @@ fn every_teacher_unwraps_the_same_vault() {
     assert_eq!(vault_before, fs::read(root.0.join("vault.enc")).unwrap(), "vault 를 다시 쓰지 않았다");
 
     // 새 교사도 같은 vault 를 연다.
-    let park = service::login(&p, &sessions, "park", HOMEROOM_PW).unwrap();
+    let park = service::login(&p, &sessions, HOMEROOM_PW).unwrap();
     let v = service::cohort(&p, &sessions, &park.token).unwrap();
     assert_eq!(v.classes["2"].keys().collect::<Vec<_>>(), vec!["3"]);
 }
