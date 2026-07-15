@@ -20,9 +20,7 @@
     provisioned: !caps.accounts, needsImport: false, adminMsg: '',
     entered: false, user: '', pw: '', pwErr: '', session: null,
     code: '', codeErr: false, student: null, selSubject: null,
-    cohort: null, tGrade: null, tClass: null, tSubject: null, _cohortLoading: false,
-    // boxView: 상자그림 비교 축. null(기본, classScoped 세션이면 반별) | 'class' | 'subject'.
-    boxView: null
+    cohort: null, tGrade: null, tClass: null, tSubject: null, _cohortLoading: false
   };
   var root;
   var chartRegistry = [];
@@ -294,11 +292,12 @@
     var statTile = function (label, val) { return '<div class="clay-inset" style="flex:1;text-align:center;padding:14px 10px;border-radius:16px;"><div style="font-size:22px;font-weight:800;color:#036242;">' + val + '</div><div style="font-size:11.5px;color:#4E7D68;font-weight:600;margin-top:2px;">' + label + '</div></div>'; };
     var groupLabel = classScoped() ? (g + '학년 ' + (state.tClass === 'all' ? '전체' : state.tClass + '반')) : (g + '학년');
 
-    // 상자그림: 반 단위 데이터가 있으면(Tauri) 현재 과목을 반별로 비교, 없으면(웹 데모) 과목별 비교로 대체.
-    // 반별 비교는 세션이 허용된 반만 나온다 — allowedClasses() 가 이미 역할대로 걸러진 목록이라
-    // 담임은 자기 반 1개, 교과교사는 배정된 반들, 관리자는 학년 전체 반이 보인다.
-    // 반이 하나뿐이면(담임) 반별 비교는 박스 1개짜리라 무의미 — 과목별로 기본값을 강제한다.
-    var boxByClass = classScoped() && classes.length > 1 && state.boxView !== 'subject';
+    // 상자그림: 반 단위 데이터가 있으면(Tauri) 상단 반 선택기와 비교 축을 하나로 묶는다 —
+    // "전체" 선택 시 반별 비교(다른 반과), 특정 반 선택 시 과목별 비교(그 반 안에서).
+    // 예전엔 별도 토글(반별/과목별)이 있었는데 상단 반 선택기와 같은 축을 건드려 헷갈렸고,
+    // 토글 전환마다 레이아웃이 바뀌어 상자그림 크기가 널뛰는 문제도 있어 상단 선택기로 흡수했다.
+    // 반이 하나뿐이면(담임) "전체" 탭 자체가 없어 늘 과목별.
+    var boxByClass = classScoped() && classes.length > 1 && state.tClass === 'all';
     var boxItems = boxByClass
       ? classes.reduce(function (acc, cc) {
           var byC = state.cohort.classes[g] && state.cohort.classes[g][cc];
@@ -313,21 +312,14 @@
       : '산포 크거나 이상치 많으면 이질 학급 → 소집단·차별화.';
 
     // 카드 두 개(5등급 분포·상자그림)는 반별/과목별 모드 둘 다 그대로 쓰고, 감싸는 레이아웃만 다르다
-    // (반별은 박스가 많을 수 있어 전체 폭, 과목별은 기존 2열).
+    // (반별은 박스가 많을 수 있어 전체 폭, 과목별은 기존 2열). 레이아웃은 "상단에 반 선택기가
+    // 여러 개 있는가"로만 갈라 — 전체/특정반 전환에 따라 흔들리지 않고 고정된다.
     var gradeDistCard = '<div class="clay-raised" style="' + CARD_PAD + '"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;color:#036242;">' + svg('#ic-radar', 20) + '<span style="font-size:16px;font-weight:800;color:#0A3D2A;">5등급 분포</span></div>' +
       '<div style="position:relative;height:230px;padding:16px;' + CHART + '"><canvas id="gradeCanvas"></canvas></div></div>';
-    var boxToggle = classScoped() && classes.length > 1
-      ? '<div class="clay-inset" style="display:inline-flex;gap:4px;padding:4px;border-radius:12px;flex:none;">' +
-          '<button data-act="boxView" data-view="class" class="' + (boxByClass ? 'clay-tab-active' : 'clay-soft-btn') + '" style="padding:6px 12px;font-size:12px;">반별</button>' +
-          '<button data-act="boxView" data-view="subject" class="' + (!boxByClass ? 'clay-tab-active' : 'clay-soft-btn') + '" style="padding:6px 12px;font-size:12px;">과목별</button>' +
-        '</div>'
-      : '';
-    var boxPlotCard = '<div class="clay-raised" style="' + CARD_PAD + '"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;flex-wrap:wrap;">' +
-      '<div style="display:flex;align-items:center;gap:10px;color:#036242;">' + svg('#ic-box', 20) + '<span style="font-size:16px;font-weight:800;color:#0A3D2A;">' + boxTitle + ' (상자그림)</span></div>' +
-      boxToggle + '</div>' +
+    var boxPlotCard = '<div class="clay-raised" style="' + CARD_PAD + '"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;color:#036242;">' + svg('#ic-box', 20) + '<span style="font-size:16px;font-weight:800;color:#0A3D2A;">' + boxTitle + ' (상자그림)</span></div>' +
       '<div style="font-size:12px;color:#7FA895;margin-bottom:8px;">' + boxHint + '</div>' +
       '<div style="padding:14px;' + CHART + '">' + GK.boxPlotSVG(boxItems) + '</div></div>';
-    var distSection = boxByClass
+    var distSection = (classScoped() && classes.length > 1)
       ? gradeDistCard + boxPlotCard
       : '<div style="display:grid;grid-template-columns:1fr 1.3fr;gap:22px;" class="teacher-grid">' + gradeDistCard + boxPlotCard + '</div>';
 
@@ -588,7 +580,6 @@
     else if (act === 'addTeacher') { doAddTeacher(); }
     else if (act === 'gGrade') { state.tGrade = +t.getAttribute('data-grade'); state.tClass = null; render(); }
     else if (act === 'tClass') { var cv = t.getAttribute('data-class'); state.tClass = cv === 'all' ? 'all' : +cv; render(); }
-    else if (act === 'boxView') { state.boxView = t.getAttribute('data-view'); render(); }
     else if (act === 'tSubject') { state.tSubject = t.getAttribute('data-sid'); render(); }
   }
   function onKeydown(e) {
