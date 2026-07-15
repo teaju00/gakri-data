@@ -201,9 +201,6 @@
     var shake = state.pwErr ? 'clayshake 0.42s ease' : 'none';
     var err = state.pwErr ? '<div id="pwErr" style="font-size:13px;color:#3C5C4F;font-weight:600;margin-top:-12px;">' + esc(state.pwErr) + '</div>' : '';
 
-    var userField = caps.accounts
-      ? '<input id="user" class="clay-inset-field" value="' + esc(state.user) + '" placeholder="교사 아이디" style="width:100%;border:none;padding:16px 20px;font-size:17px;font-family:inherit;color:#0C4A34;text-align:center;">'
-      : '';
     var subtitle = caps.accounts
       ? '교내 열람용 도구입니다.<br>배정된 교사 계정으로 로그인해 주세요.'
       : '교내 열람용 도구입니다.<br>비밀번호를 입력해 주세요.';
@@ -215,7 +212,6 @@
       '<div class="clay-raised" style="width:100%;max-width:420px;display:flex;flex-direction:column;align-items:center;gap:24px;padding:48px 40px;">' +
       '<div class="clay-icon" style="width:88px;height:88px;display:flex;align-items:center;justify-content:center;border-radius:26px;">' + svg('#ic-lock', 40) + '</div>' +
       '<div style="text-align:center;"><div style="font-size:23px;font-weight:800;color:#0A3D2A;">성적 분석 · 접속 인증</div><div style="margin-top:8px;font-size:14px;color:#4E7D68;line-height:1.5;">' + subtitle + '</div></div>' +
-      userField +
       '<input id="pw" type="password" class="clay-inset-field" value="' + esc(state.pw) + '" placeholder="비밀번호" style="width:100%;border:none;padding:16px 20px;font-size:17px;font-family:inherit;color:#0C4A34;text-align:center;letter-spacing:0.15em;animation:' + shake + ';">' +
       err +
       '<button data-act="enter" class="clay-brand-btn" style="width:100%;padding:16px;font-size:16px;">입장</button>' +
@@ -510,9 +506,8 @@
   }
 
   function doEnter() {
-    var uEl = document.getElementById('user'); if (uEl) state.user = uEl.value.trim();
     var el = document.getElementById('pw'); state.pw = el ? el.value : state.pw;
-    api.login(state.user, state.pw)
+    api.login(state.pw)
       .then(function (s) {
         state.session = s; state.entered = true; state.pwErr = ''; state.pw = ''; state.adminMsg = '';
         state.cohort = null; state.tGrade = null; state.tClass = null; state.tSubject = null;
@@ -523,8 +518,8 @@
         render();
       })
       .catch(function () {
-        state.pwErr = caps.accounts ? '아이디 또는 비밀번호가 올바르지 않습니다.' : '비밀번호가 올바르지 않습니다.';
-        render(); focusEl(caps.accounts ? 'user' : 'pw');
+        state.pwErr = '비밀번호가 올바르지 않습니다.';
+        render(); focusEl('pw');
       });
   }
 

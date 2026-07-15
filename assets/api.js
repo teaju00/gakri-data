@@ -12,7 +12,7 @@
  *   GKAPI.caps()                    -> { classScope, accounts }
  *   GKAPI.meta()                    -> Promise<Meta>
  *   GKAPI.studentLookup(code)       -> Promise<StudentPayload>   (인증 불필요)
- *   GKAPI.login(username, password) -> Promise<Session>
+ *   GKAPI.login(password)           -> Promise<Session>
  *   GKAPI.logout()                  -> Promise<void>
  *   GKAPI.cohort()                  -> Promise<CohortView>       (로그인 후에만)
  *
@@ -51,7 +51,7 @@
     studentLookup: function (code) {
       return getJson('public/data/students/' + encodeURIComponent(code) + '.json');
     },
-    login: function (_username, password) {
+    login: function (password) {
       if (password !== WEB_DEMO_PW) return Promise.reject(new Error('BAD_CREDENTIALS'));
       webSession = {
         token: 'web',
@@ -84,8 +84,8 @@
     caps: function () { return { classScope: true, accounts: true }; },
     meta: function () { return invoke('meta'); },
     studentLookup: function (code) { return invoke('student_lookup', { code: code }); },
-    login: function (username, password) {
-      return invoke('login', { username: username, password: password }).then(function (s) {
+    login: function (password) {
+      return invoke('login', { password: password }).then(function (s) {
         tauriSession = s;
         return s;
       });
