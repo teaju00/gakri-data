@@ -33,10 +33,9 @@ pub fn provision(app: AppHandle, username: String, password: String) -> Result<(
 pub fn login(
     app: AppHandle,
     sessions: State<'_, SessionStore>,
-    username: String,
     password: String,
 ) -> Result<SessionDto> {
-    service::login(&paths(&app)?, &sessions, &username, &password)
+    service::login(&paths(&app)?, &sessions, &password)
 }
 
 #[tauri::command]
