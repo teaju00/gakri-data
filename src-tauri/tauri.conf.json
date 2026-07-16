@@ -1,0 +1,44 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "성적 분석",
+  "version": "0.1.0",
+  "identifier": "kr.school.gakri-data",
+  "build": {
+    "beforeDevCommand": "npm run serve",
+    "devUrl": "http://localhost:5501",
+    "beforeBuildCommand": "npm run build:shell",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "성적 분석",
+        "width": 1180,
+        "height": 860,
+        "minWidth": 900,
+        "minHeight": 640,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src ipc: http://ipc.localhost"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["msi", "nsis"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
+    "resources": {
+      "../config/subjects.json": "subjects.json"
+    },
+    "shortDescription": "학생 성적 분석 (오프라인)",
+    "longDescription": "성적 파일을 로컬에서 처리하는 오프라인 분석 도구. 외부 서버 연결 없음."
+  },
+  "plugins": {}
+}

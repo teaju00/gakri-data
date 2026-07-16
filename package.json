@@ -7,10 +7,17 @@
   "scripts": {
     "gen-sample": "node scripts/gen-sample.mjs",
     "build": "node scripts/build-data.mjs",
-    "test": "node --test scripts/grade.test.mjs",
-    "serve": "python -m http.server 5501"
+    "test": "node --test",
+    "serve": "python -m http.server 5501",
+    "build:shell": "node scripts/build-shell.mjs",
+    "tauri": "tauri",
+    "app:dev": "tauri dev",
+    "app:build": "tauri build"
   },
   "dependencies": {
     "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
   }
 }

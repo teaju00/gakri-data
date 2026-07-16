@@ -8,3 +8,11 @@ public/data/
 .DS_Store
 # Claude Code 로컬 사용자 설정 (권한 등) — 공유 안 함
 .claude/settings.local.json
+
+# Tauri
+dist/
+src-tauri/target/
+src-tauri/gen/
+
+# superpowers subagent-driven-development scratch (progress ledger, briefs, reports)
+.superpowers/

@@ -21,15 +21,17 @@
   --brand-accent: var(--green-600);
   --bg: #DDE8E2;          /* body background - slightly darker for card contrast */
   --surface-card: #F0F7F3; /* card surface - brighter than bg for float effect */
+  --surface-inset-2: #EAF4EF; /* 얕게 파인 배경(탭 바, 테이블 로우) */
   --text: #0B2F23;
   --text-soft: #3C5C4F;
   --text-muted: #7FA895;
+  --text-hint: #8AAE9E;   /* 가장 옅은 보조 문구(안내 문구, 캡션) */
+  --text-input: #0C4A34;  /* 입력창 안의 글자색 */
+  --heading: #0A3D2A;     /* 카드/섹션 제목 */
+  --danger: #B54B3A;      /* 유일한 에러 상태 색 */
+  --chip-bg-brand: #DCEEE5; /* 브랜드 톤 뱃지 배경 */
   --white: #FFFFFF;
 
-  /* Auxiliary 4 colors */
-  --teal: #4DB8A4;
-  --gold: #F2C94C;
-  --slate: #6B8A9E;
   --cream: #FBF7EF;
 
   /* Clay shadows (green-tinted, no pure black) */
@@ -43,6 +45,9 @@
   --radius-btn: 20px;
   --radius-badge: 999px;
 
+  /* Motion */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
   --font-sans: 'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
 }
 
@@ -54,6 +59,7 @@ body {
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
 }
 a { color: var(--green-800); }
 a:hover { color: var(--green-700); }
@@ -61,6 +67,14 @@ input::placeholder { color: var(--text-muted); }
 button { font-family: inherit; }
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-thumb { background: rgba(3,98,66,0.18); border-radius: 8px; }
+
+/* ---- Keyboard focus ring (buttons/links) — clay-tinted, mouse clicks stay clean ---- */
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid rgba(3, 98, 66, 0.45);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
 
 /* ---- Clay classes ---- */
 
@@ -86,7 +100,7 @@ button { font-family: inherit; }
 /* 일반 오목 영역 (탭 바, 테이블 바깥 등 얕게 파인 배경) */
 .clay-inset {
   border-radius: 22px;
-  background: #EAF4EF;
+  background: var(--surface-inset-2);
   box-shadow:
     inset 4px 4px 12px rgba(3, 60, 42, 0.08),
     inset -4px -4px 12px rgba(255, 255, 255, 0.9);
@@ -95,12 +109,20 @@ button { font-family: inherit; }
 /* 아이콘 박스 */
 .clay-icon {
   border-radius: 14px;
-  background: #E6F1EC;
+  background: var(--green-100);
   color: var(--brand);
   box-shadow:
     6px 8px 16px rgba(3, 60, 42, 0.1),
     inset 3px 4px 8px rgba(255, 255, 255, 0.8),
     inset -3px -4px 8px rgba(3, 60, 42, 0.06);
+}
+
+/* 작은 클레이 뱃지(등급 숫자, 반영요소 칩, 변화량 칩 등) — 배경·글자색은 인라인이 정하고, 여긴 입체감만 얹는다 */
+.clay-badge {
+  box-shadow:
+    3px 4px 7px rgba(3, 60, 42, 0.18),
+    inset 2px 2px 4px rgba(255, 255, 255, 0.55),
+    inset -2px -2px 5px rgba(3, 60, 42, 0.12);
 }
 
 /* 보조 버튼 */
@@ -110,13 +132,13 @@ button { font-family: inherit; }
   font-family: inherit;
   font-weight: 700;
   color: var(--text-soft);
-  background: #E6F1EC;
+  background: var(--green-100);
   cursor: pointer;
   box-shadow:
     4px 6px 12px rgba(3, 60, 42, 0.08),
     inset 2px 3px 6px rgba(255, 255, 255, 0.8),
     inset -2px -3px 6px rgba(3, 60, 42, 0.04);
-  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s var(--ease-out), filter 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out);
 }
 .clay-soft-btn:hover {
   transform: translateY(-2px);
@@ -150,7 +172,7 @@ button { font-family: inherit; }
 
 /* 테이블 로우 */
 .clay-table-row {
-  background: #EAF4EF;
+  background: var(--surface-inset-2);
   border-radius: 18px;
   box-shadow:
     inset 3px 4px 8px rgba(3, 60, 42, 0.06),
@@ -174,7 +196,7 @@ button { font-family: inherit; }
     6px 8px 16px rgba(3, 60, 42, 0.25),
     inset 3px 4px 8px rgba(255, 255, 255, 0.3),
     inset -3px -4px 10px rgba(1, 50, 33, 0.5);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.12s ease;
+  transition: transform 0.15s var(--ease-out), box-shadow 0.15s var(--ease-out), filter 0.12s var(--ease-out);
 }
 .clay-brand-btn:hover {
   transform: translateY(-2px);
@@ -195,21 +217,21 @@ button { font-family: inherit; }
 
 /* ---- Improved existing button/card classes ---- */
 
-.btn-primary { transition: filter .12s ease, box-shadow .12s ease, transform .12s ease; }
+.btn-primary { transition: filter .12s var(--ease-out), box-shadow .12s var(--ease-out), transform .12s var(--ease-out); }
 .btn-primary:hover { filter: brightness(1.07); transform: translateY(-2px); }
 .btn-primary:active {
   transform: translateY(1px) scale(0.98);
   box-shadow: inset 4px 4px 10px rgba(1,50,33,0.55), inset -3px -3px 8px rgba(90,180,140,0.35) !important;
 }
 
-.btn-soft { transition: color .12s ease, filter .12s ease, box-shadow .12s ease, transform .12s ease; }
+.btn-soft { transition: color .12s var(--ease-out), filter .12s var(--ease-out), box-shadow .12s var(--ease-out), transform .12s var(--ease-out); }
 .btn-soft:hover { color: var(--green-700); filter: brightness(1.03); transform: translateY(-1px); }
 .btn-soft:active {
   transform: translateY(0);
   box-shadow: inset 3px 3px 7px rgba(3,98,66,0.16), inset -3px -3px 7px rgba(255,255,255,0.9) !important;
 }
 
-.card-hover { transition: filter .12s ease, transform .12s ease; }
+.card-hover { transition: filter .12s var(--ease-out), transform .12s var(--ease-out); }
 .card-hover:hover { filter: brightness(1.025); transform: translateY(-3px); }
 
 /* ---- Input focus — clay focus ring ---- */
@@ -219,7 +241,6 @@ input:focus {
     inset 7px 7px 15px rgba(3,60,42,0.18),
     inset -7px -7px 15px rgba(255,255,255,0.95),
     0 0 0 3px rgba(3,98,66,0.25) !important;
-  transition: box-shadow 0.15s ease;
 }
 
 /* ---- Animations ---- */
@@ -251,7 +272,7 @@ input:focus {
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  animation: fadeIn 0.2s ease;
+  animation: fadeIn 0.2s var(--ease-out);
 }
 .grade-modal {
   background: var(--cream);
@@ -263,7 +284,7 @@ input:focus {
     14px 20px 40px rgba(3, 60, 42, 0.2),
     inset 4px 6px 16px rgba(255, 255, 255, 0.9),
     inset -4px -8px 16px rgba(3, 60, 42, 0.08);
-  animation: fadeUp 0.25s ease;
+  animation: fadeUp 0.25s var(--ease-out);
   display: flex;
   flex-direction: column;
   align-items: center;
